@@ -95,4 +95,3 @@ src/
 ```
 
 > **Note:** this is an educational demo, not financial advice. All data is synthetic and in-memory.
-# fin
