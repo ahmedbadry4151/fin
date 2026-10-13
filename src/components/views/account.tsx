@@ -18,6 +18,9 @@ import { formatDate, relativeTime } from "@/lib/format";
 import { CURRENCIES, EMPLOYMENT_TYPES } from "@/lib/finance";
 import { PLANNING_STYLES } from "@/lib/economy";
 import { exportAllData, exportReport } from "@/lib/client-api";
+import { DEFAULT_ACCENT } from "@/lib/accent";
+
+const PRESETS = ["#f3c142", "#f97316", "#ef4444", "#ec4899", "#a855f7", "#3b82f6", "#14b8a6", "#22c55e"];
 
 type UserData = { name: string; email: string; age: number | null; country: string | null; city: string | null; currency: string; employment: string | null; planningStyle: string; emailVerified: boolean; createdAt: string; settings: Record<string, unknown> };
 
@@ -133,7 +136,7 @@ function SettingsShell({ current, title, description, children }: { current: str
 export function SettingsView({ user }: { user: UserData }) {
   const router = useRouter();
   const { toast } = useToast();
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, yellowColor, setYellowColor } = useTheme();
   const [currency, setCurrency] = useState(user.currency);
   async function saveCurrency(v: string) {
     setCurrency(v);
@@ -144,7 +147,7 @@ export function SettingsView({ user }: { user: UserData }) {
   return (
     <SettingsShell current="/settings" title="Settings" description="Appearance, currency, security — and the deeper simulation, AI, privacy and data controls.">
       <div className="grid gap-5 lg:grid-cols-2">
-        <Card><CardTitle>Appearance</CardTitle><div className="grid grid-cols-2 gap-2"><OptionCard selected={theme === "light"} onClick={() => setTheme("light")} title="Light" hint="Warm cream surfaces" icon={<Sun className="h-4 w-4" />} /><OptionCard selected={theme === "dark"} onClick={() => setTheme("dark")} title="Dark" hint="Charcoal with luminous amber" icon={<Moon className="h-4 w-4" />} /></div><p className="mt-3 text-[11.5px] text-muted">Reduced motion follows your system preference automatically.</p></Card>
+        <Card><CardTitle>Appearance</CardTitle><div className="grid grid-cols-2 gap-2"><OptionCard selected={theme === "light"} onClick={() => setTheme("light")} title="Light" hint="Warm cream surfaces" icon={<Sun className="h-4 w-4" />} /><OptionCard selected={theme === "dark"} onClick={() => setTheme("dark")} title="Dark" hint="Charcoal with luminous amber" icon={<Moon className="h-4 w-4" />} /></div><div className="mt-4"><label className="text-xs font-medium text-muted block mb-1">Accent color</label><div className="flex flex-wrap items-center gap-2">{PRESETS.map((c) => <button key={c} type="button" aria-label={`Accent ${c}`} onClick={() => setYellowColor(c)} className={`h-8 w-8 rounded-full border-2 press ${yellowColor.toLowerCase() === c.toLowerCase() ? "border-ink" : "border-transparent"}`} style={{ background: c }} />)}<input type="color" value={yellowColor} onChange={e => setYellowColor(e.target.value)} className="h-8 w-8 cursor-pointer rounded-full border-2 border-transparent p-0" aria-label="Custom accent color" /></div></div><div className="mt-3"><Button size="sm" variant="secondary" onClick={() => { setYellowColor(DEFAULT_ACCENT); toast({ title: "Accent reset to default" }); }}>Reset to default</Button></div><p className="mt-3 text-[11.5px] text-muted">Buttons, charts, notifications, selects, highlights — the whole site follows this color.</p></Card>
         <Card><CardTitle>Currency</CardTitle><div className="flex flex-wrap gap-1.5">{CURRENCIES.map((x) => <FilterPill key={x} active={currency === x} onClick={() => saveCurrency(x)}>{x}</FilterPill>)}</div><p className="mt-3 text-[11.5px] text-muted">Display currency for every value. Amounts are not converted.</p></Card>
         <Card><CardTitle>Account</CardTitle><KeyValue rows={[{ k: "Name", v: user.name }, { k: "Email", v: user.email }, { k: "Member since", v: formatDate(user.createdAt) }]} /><div className="mt-3 flex gap-2"><Button size="sm" variant="secondary" href="/profile?edit=1">Edit profile</Button><Button size="sm" variant="secondary" href="/reset-password">Change password</Button></div></Card>
         <Card><CardTitle>Security</CardTitle><KeyValue rows={[{ k: "Email verification", v: user.emailVerified ? <StatusBadge tone="good">Verified</StatusBadge> : <Link href="/verify-email" className="font-semibold">Verify</Link> }, { k: "Sessions", v: "This device" }, { k: "Session length", v: "30 days" }]} /></Card>

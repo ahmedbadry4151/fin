@@ -15,7 +15,8 @@
   --subtle: #a19f94;
   --line: rgba(34, 34, 32, 0.08);
   --line-strong: rgba(34, 34, 32, 0.16);
-  --accent: #f3c142;
+  --accent-base: #f3c142;
+  --accent: var(--accent-base);
   --accent-soft: #f8e3a1;
   --accent-ink: #3a2e05;
   --glow-a: #f2eac3;
@@ -52,7 +53,8 @@
   --subtle: #6f6d64;
   --line: rgba(255, 255, 255, 0.08);
   --line-strong: rgba(255, 255, 255, 0.16);
-  --accent: #f7c94c;
+  --accent-base: #f7c94c;
+  --accent: var(--accent-base);
   --accent-soft: #5a4712;
   --accent-ink: #1b1604;
   --glow-a: #2b2614;
@@ -181,8 +183,8 @@ body {
     --card: #fbf9f2;
     --card-2: rgba(34, 34, 32, 0.06);
     --card-3: rgba(34, 34, 32, 0.12);
-    --accent: #b07f0e;
-    --accent-soft: #f3e2b0;
+    --accent: color-mix(in srgb, var(--accent-base, #f7c94c) 78%, black);
+    --accent-soft: color-mix(in srgb, var(--accent-base, #f7c94c) 18%, #fbf9f2);
     background: #ece9df;
     color: #222220;
   }
