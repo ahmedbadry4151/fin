@@ -48,17 +48,23 @@ export function SimulationConfigView({ currency: c, scenario, goals, econ, defau
     const started = Date.now();
     try {
       const r = await fetch("/api/simulations", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scenarioId: scenario?.id ?? null, goalId, paths, horizonYears: horizon }) });
-      if (!r.ok) throw new Error("failed");
+      if (!r.ok) {
+        let detail = "";
+        try {
+          detail = (await r.json())?.error ?? "";
+        } catch {}
+        throw new Error(detail || `request failed (${r.status})`);
+      }
       const d = await r.json();
       const wait = Math.max(0, 4400 - (Date.now() - started));
       setTimeout(() => router.push(`/simulations/${d.id}`), wait);
-    } catch {
+    } catch (e) {
       setRunning(false);
-      setError("We couldn't complete this simulation.");
+      setError(e instanceof Error && e.message ? `We couldn't complete this simulation. ${e.message}` : "We couldn't complete this simulation.");
     }
   }
 
-  if (error) return <ErrorState title="We couldn't complete this simulation." description="The engine returned an error. Check that your Twin has income and expenses, then try again." onRetry={() => setError(null)} secondary={<Button variant="secondary" href="/economy">Review assumptions</Button>} />;
+  if (error) return <ErrorState title="We couldn't complete this simulation." description={error} onRetry={() => setError(null)} secondary={<Button variant="secondary" href="/economy">Review assumptions</Button>} />;
 
   if (running) {
     return (

@@ -133,7 +133,6 @@ export async function getTransactions(userId: number, f: TransactionFilters = {}
   }
   rows.sort((a, b) => (a.date === b.date ? b.id - a.id : b.date.localeCompare(a.date)));
   return rows.slice(0, f.limit ?? 500);
-  return rows.slice(0, f.limit ?? 500);
 }
 
 export type MonthAgg = {

@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import { useId, useMemo, useState } from "react";
+import { useId, useEffect, useMemo, useState } from "react";
 import { formatMoney, monthLabel, yearLabel } from "@/lib/format";
 import { EASE_OUT } from "../motion/stagger";
 
@@ -32,7 +32,11 @@ export function FanChart({
 }) {
   const reduce = useReducedMotion();
   const id = useId().replace(/:/g, "");
+  const [mounted, setMounted] = useState(false);
   const [hover, setHover] = useState<number | null>(null);
+  useEffect(() => {
+    setTimeout(() => setMounted(true), 0);
+  }, []);
   const W = 800;
   const H = height;
   const padL = compact ? 8 : 56;
@@ -91,6 +95,10 @@ export function FanChart({
 
   const draw = animate && !reduce;
   const hi = hover;
+
+  if (!mounted) {
+    return <div className={`relative ${className}`} style={{ height }} aria-hidden="true" />;
+  }
 
   return (
     <div className={`relative ${className}`}>

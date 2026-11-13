@@ -19,6 +19,7 @@ import { buildSimTwin } from "./twin";
 import { templateByKey } from "./scenarios";
 import { DEFAULT_ASSUMPTIONS } from "./economy";
 import { toISODate } from "./format";
+import { DEMO_ACCOUNTS, DEMO_ASSETS, DEMO_EXPENSES, DEMO_GOAL, DEMO_LIABILITIES, DEMO_PROFILE_NUMBERS, demoGoalTargetDate } from "./demo";
 
 export type Store = {
   users: User[];
@@ -34,22 +35,6 @@ export type Store = {
   notifications: Notification[];
   reports: Report[];
   aiMessages: AiMessage[];
-};
-
-const DEMO_EXPENSES: Record<string, number> = {
-  housing: 7500,
-  food: 4200,
-  transportation: 1800,
-  utilities: 1100,
-  healthcare: 600,
-  education: 0,
-  debt: 1750,
-  family: 1500,
-  entertainment: 900,
-  shopping: 800,
-  travel: 500,
-  subscriptions: 350,
-  other: 400,
 };
 
 function rnd(seed: number) {
@@ -129,14 +114,8 @@ function buildStore(): Store {
   const profile: FinancialProfile = {
     id: nextId(),
     userId,
-    monthlyIncome: 32000,
-    additionalIncome: 0,
-    incomeFrequency: "monthly",
+    ...DEMO_PROFILE_NUMBERS,
     expenses: DEMO_EXPENSES,
-    cashSavings: 48200,
-    emergencySavings: 88560,
-    monthlySavings: 10600,
-    otherLiquid: 0,
     updatedAt: now,
   };
 
@@ -153,26 +132,18 @@ function buildStore(): Store {
     updatedAt: now,
   };
 
-  const accounts: Account[] = [
-    { id: nextId(), userId, name: "Main Bank", type: "bank", balance: 48200, currency: "EGP", institution: "CIB", updatedAt: now },
-    { id: nextId(), userId, name: "Savings", type: "savings", balance: 120000, currency: "EGP", institution: "CIB", updatedAt: now },
-    { id: nextId(), userId, name: "Investments", type: "investment", balance: 95000, currency: "EGP", institution: "Thndr", updatedAt: now },
-    { id: nextId(), userId, name: "Credit Card", type: "credit", balance: -8500, currency: "EGP", institution: "CIB", updatedAt: now },
-  ];
+  const accounts: Account[] = DEMO_ACCOUNTS.map((a) => ({ id: nextId(), userId, name: a.name, type: a.type, balance: a.balance, currency: "EGP", institution: a.institution, updatedAt: now }));
   const ids = {
     bank: accounts.find((a) => a.name === "Main Bank")!.id,
     savings: accounts.find((a) => a.name === "Savings")!.id,
     credit: accounts.find((a) => a.name === "Credit Card")!.id,
   };
 
-  const assets: Asset[] = [
-    { id: nextId(), userId, name: "Car", type: "vehicle", value: 185000 },
-    { id: nextId(), userId, name: "Gold", type: "other", value: 30000 },
-  ];
-  const liabilities: Liability[] = [{ id: nextId(), userId, name: "Car loan", type: "car_loan", balance: 41200, monthlyPayment: 1250, interestRate: 0.12, remainingMonths: 38 }];
+  const assets: Asset[] = DEMO_ASSETS.map((a) => ({ id: nextId(), userId, name: a.name, type: a.type, value: a.value }));
+  const liabilities: Liability[] = DEMO_LIABILITIES.map((l) => ({ id: nextId(), userId, ...l }));
 
   const goals: Goal[] = [
-    { id: nextId(), userId, name: "Buy a Home", type: "home", targetAmount: 1500000, currentAmount: 126000, targetDate: `${y + 8}-01-01`, monthlyContribution: 8500, status: "active", createdAt: now },
+    { id: nextId(), userId, name: DEMO_GOAL.name, type: DEMO_GOAL.type, targetAmount: DEMO_GOAL.targetAmount, currentAmount: DEMO_GOAL.currentAmount, targetDate: demoGoalTargetDate(now), monthlyContribution: DEMO_GOAL.monthlyContribution, status: "active", createdAt: now },
     { id: nextId(), userId, name: "Emergency Fund", type: "emergency", targetAmount: 110700, currentAmount: 88560, targetDate: `${y + 1}-06-01`, monthlyContribution: 1000, status: "active", createdAt: now },
     { id: nextId(), userId, name: "Japan Trip", type: "travel", targetAmount: 60000, currentAmount: 18000, targetDate: `${y + 1}-11-01`, monthlyContribution: 1000, status: "active", createdAt: now },
   ];
@@ -193,20 +164,18 @@ function buildStore(): Store {
     lastRunAt: now,
   }));
 
+  // The simulation input is derived from the seeded rows — one data source, no drift.
   const input = {
-    monthlyIncome: 32000,
-    additionalIncome: 0,
-    expenses: DEMO_EXPENSES,
-    cashSavings: 48200,
-    emergencySavings: 88560,
-    monthlySavings: 10600,
-    otherLiquid: 0,
+    monthlyIncome: profile.monthlyIncome,
+    additionalIncome: profile.additionalIncome,
+    expenses: profile.expenses,
+    cashSavings: profile.cashSavings,
+    emergencySavings: profile.emergencySavings,
+    monthlySavings: profile.monthlySavings,
+    otherLiquid: profile.otherLiquid,
     accounts: accounts.map((a) => ({ type: a.type, balance: a.balance })),
-    assets: [
-      { type: "vehicle", value: 185000 },
-      { type: "other", value: 30000 },
-    ],
-    liabilities: [{ balance: 41200, monthlyPayment: 1250, interestRate: 0.12, remainingMonths: 38 }],
+    assets: assets.map((a) => ({ type: a.type, value: a.value })),
+    liabilities: liabilities.map((l) => ({ balance: l.balance, monthlyPayment: l.monthlyPayment, interestRate: l.interestRate, remainingMonths: l.remainingMonths })),
   };
   const simTwin = buildSimTwin(input, { ...homeGoal, targetDate: String(homeGoal.targetDate) });
 

@@ -15,23 +15,34 @@ import { Collapse, KenBurns } from "../motion/primitives";
 import { FanChart } from "../charts/fan-chart";
 import { HBars } from "../charts/charts";
 import { useTheme } from "../providers";
-import { formatMoney } from "@/lib/format";
-import { runSimulation, type SimTwin, type EconAssumptions } from "@/lib/simulation";
+import { formatMoney, formatPct } from "@/lib/format";
+import { runSimulation, type EconAssumptions } from "@/lib/simulation";
+import { computeMetrics } from "@/lib/finance";
 import { SCENARIO_TEMPLATES } from "@/lib/scenarios";
 import { ASSUMPTION_DEFS, DEFAULT_ASSUMPTIONS } from "@/lib/economy";
+import { DEMO_TWIN_INPUT, demoSimTwin } from "@/lib/demo";
 
-export const DEMO_TWIN: SimTwin = {
-  monthlyIncome: 32000,
-  monthlyExpenses: 19650,
-  essentialExpenses: 16700,
-  cash: 168200,
-  investments: 95000,
-  emergencySavings: 88560,
-  assets: [{ value: 185000, growth: -0.12 }, { value: 30000, growth: 0.04 }],
-  liabilities: [{ balance: 41200, payment: 1250, rate: 0.12 }, { balance: 8500, payment: 425, rate: 0.24 }],
-  goal: { id: 1, name: "Buy a Home", target: 1500000, current: 126000, contribution: 8500, months: 96 },
-};
+export const DEMO_TWIN = demoSimTwin();
 const DEMO_ECON: EconAssumptions = { ...DEFAULT_ASSUMPTIONS, horizonYears: 10 };
+
+/* One shared pair of demo runs — same twin, assumptions, seed and path count as
+   the stored "Current Plan" simulation the dashboard shows, so the marketing
+   pages and the product quote the same numbers. */
+const DEMO_BASELINE = runSimulation(DEMO_TWIN, DEMO_ECON, {}, { paths: 600, seed: 1337, sensitivity: false, baseline: false });
+const DEMO_SAVE_MORE = runSimulation(DEMO_TWIN, DEMO_ECON, { savingsChangePct: 15 }, { paths: 600, seed: 1337, sensitivity: false, baseline: true });
+const DEMO_EXTRA_SAVINGS = Math.round(
+  0.15 * Math.max(computeMetrics(DEMO_TWIN_INPUT).savings, DEMO_TWIN_INPUT.monthlyIncome * 0.1)
+);
+
+const AI_DEMO = {
+  extra: formatMoney(DEMO_EXTRA_SAVINGS, "EGP"),
+  from: formatMoney(DEMO_BASELINE.final.p50, "EGP", { compact: true }),
+  to: formatMoney(DEMO_SAVE_MORE.final.p50, "EGP", { compact: true }),
+  pFrom: formatPct(DEMO_BASELINE.goal?.probability ?? 0, 0),
+  pTo: formatPct(DEMO_SAVE_MORE.goal?.probability ?? 0, 0),
+  barFrom: DEMO_BASELINE.final.p50 / 1e6,
+  barTo: DEMO_SAVE_MORE.final.p50 / 1e6,
+};
 
 /* ---------------- Public chrome ---------------- */
 const LINKS = [{ href: "/product", label: "Product" }, { href: "/how-it-works", label: "How it works" }, { href: "/features", label: "Features" }, { href: "/showcase", label: "Scenarios" }, { href: "/security", label: "Security" }, { href: "/faq", label: "FAQ" }];
@@ -71,8 +82,8 @@ export function PublicFooter() {
 /* ---------------- Hero simulation ---------------- */
 export function HeroSimulation({ autoplay = true }: { autoplay?: boolean }) {
   const [phase, setPhase] = useState(0); // 0 metrics, 1 baseline chart, 2 scenario
-  const baseline = useMemo(() => runSimulation(DEMO_TWIN, DEMO_ECON, {}, { paths: 60, seed: 3 }), []);
-  const scenario = useMemo(() => runSimulation(DEMO_TWIN, DEMO_ECON, { savingsChangePct: 15 }, { paths: 60, seed: 3 }), []);
+  const baseline = DEMO_BASELINE;
+  const scenario = DEMO_SAVE_MORE;
   useEffect(() => {
     if (!autoplay) return;
     const t1 = setTimeout(() => setPhase(1), 1800);
@@ -107,7 +118,7 @@ export function HeroSimulation({ autoplay = true }: { autoplay?: boolean }) {
           {phase === 0 && <motion.div key="empty" className="hatch h-[190px] rounded-2xl border border-line" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} />}
         </AnimatePresence>
       </div>
-      <div className="mt-3 flex items-center justify-between text-[11px] text-subtle"><span>60 simulated paths · hatched = uncertainty range</span><span className="inline-flex gap-1">{[0, 1, 2].map((i) => <span key={i} className={`h-1.5 w-1.5 pill ${phase === i ? "bg-accent" : "bg-card3"}`} />)}</span></div>
+      <div className="mt-3 flex items-center justify-between text-[11px] text-subtle"><span>{baseline.paths.toLocaleString()} simulated paths · hatched = uncertainty range</span><span className="inline-flex gap-1">{[0, 1, 2].map((i) => <span key={i} className={`h-1.5 w-1.5 pill ${phase === i ? "bg-accent" : "bg-card3"}`} />)}</span></div>
     </motion.div>
   );
 }
@@ -143,7 +154,7 @@ export function Landing() {
       <section className="mx-auto max-w-6xl px-5 py-16">
         <div className="grid gap-6 lg:grid-cols-2">
           <Reveal><div className="card h-full p-8"><div className="label">Traditional finance</div><div className="mt-2 text-[26px] font-extrabold tracking-tight">Shows what happened.</div><p className="mt-2 text-[13.5px] text-muted">Statements, categories, charts of last month. Useful — and entirely backward-looking.</p><div className="mt-6 space-y-2 opacity-60">{["Rent −7,500", "Groceries −920", "Salary +32,000"].map((r) => <div key={r} className="flex justify-between rounded-xl bg-card2 px-3 py-2 text-[12.5px] tnum"><span>{r.split(" ")[0]}</span><span>{r.split(" ")[1]}</span></div>)}</div></div></Reveal>
-          <Reveal delay={0.1}><div className="card-dark h-full p-8"><div className="label text-ink-fg/55">Why FinTwin</div><div className="mt-2 text-[26px] font-extrabold tracking-tight">Explores what could happen next.</div><p className="mt-2 text-[13.5px] text-ink-fg/65">Change a decision, re-run the future, compare the distributions. The product is the <em>range</em>, and the reasons behind it.</p><div className="mt-6 grid grid-cols-3 gap-2 text-center">{[["5th", "1.9M"], ["Median", "3.4M"], ["95th", "5.6M"]].map(([k, v]) => <div key={k} className="rounded-2xl bg-ink-fg/10 p-3"><div className="label-sm text-ink-fg/50">{k}</div><div className="mt-1 text-[18px] font-extrabold tnum text-accent">{v}</div></div>)}</div></div></Reveal>
+          <Reveal delay={0.1}><div className="card-dark h-full p-8"><div className="label text-ink-fg/55">Why FinTwin</div><div className="mt-2 text-[26px] font-extrabold tracking-tight">Explores what could happen next.</div><p className="mt-2 text-[13.5px] text-ink-fg/65">Change a decision, re-run the future, compare the distributions. The product is the <em>range</em>, and the reasons behind it.</p><div className="mt-6 grid grid-cols-3 gap-2 text-center">{([["5th", DEMO_BASELINE.final.p5], ["Median", DEMO_BASELINE.final.p50], ["95th", DEMO_BASELINE.final.p95]] as const).map(([k, v]) => <div key={k} className="rounded-2xl bg-ink-fg/10 p-3"><div className="label-sm text-ink-fg/50">{k}</div><div className="mt-1 text-[18px] font-extrabold tnum text-accent">{formatMoney(v, "EGP", { compact: true })}</div></div>)}</div></div></Reveal>
         </div>
       </section>
 
@@ -196,7 +207,7 @@ export function AiDemoCard() {
   return (
     <div className="card p-5">
       <div className="flex justify-end"><span className="pill bg-ink px-4 py-2 text-[13px] font-medium text-ink-fg">What if I save 15% more?</span></div>
-      <div className="mt-3 flex gap-3"><span className="grid h-8 w-8 shrink-0 place-items-center pill bg-ink text-accent"><Sparkles className="h-4 w-4" /></span><div className="flex-1 space-y-3 rounded-[20px] bg-card2 p-4"><p className="text-[13px] leading-relaxed">Saving 15% more means roughly <b className="tnum">EGP 1,590</b> extra per month. Under the selected assumptions the simulation moves the median 10-year net worth from <b className="tnum">EGP 3.4M</b> to <b className="tnum">EGP 3.7M</b>, and the estimated probability of reaching “Buy a Home” from 52% to 61%.</p><div className="grid grid-cols-3 gap-2">{[["Extra / month", "EGP 1,590", true], ["Median NW", "EGP 3.7M", false], ["Goal prob.", "61%", false]].map(([k, v, a]) => <div key={k as string} className={`rounded-xl p-2.5 ${a ? "bg-accent text-accent-ink" : "bg-card"}`}><div className="text-[9.5px] font-semibold uppercase tracking-[0.08em] opacity-70">{k}</div><div className="text-[14px] font-extrabold tnum">{v}</div></div>)}</div><HBars currency="EGP" rows={[{ label: "Current plan", value: 3.4, display: "3.4M", tone: "accent" }, { label: "Save 15% more", value: 3.7, display: "3.7M", tone: "ink" }]} /><div className="flex flex-wrap gap-1.5 text-[11.5px] font-semibold"><span className="pill bg-ink px-3 py-1 text-ink-fg">Create this scenario</span><span className="pill bg-card px-3 py-1">Open goal planner</span><span className="ml-auto text-muted">View model context ▾</span></div></div></div>
+      <div className="mt-3 flex gap-3"><span className="grid h-8 w-8 shrink-0 place-items-center pill bg-ink text-accent"><Sparkles className="h-4 w-4" /></span><div className="flex-1 space-y-3 rounded-[20px] bg-card2 p-4"><p className="text-[13px] leading-relaxed">Saving 15% more means roughly <b className="tnum">{AI_DEMO.extra}</b> extra per month. Under the selected assumptions the simulation moves the median 10-year net worth from <b className="tnum">{AI_DEMO.from}</b> to <b className="tnum">{AI_DEMO.to}</b>, and the estimated probability of reaching “Buy a Home” from {AI_DEMO.pFrom} to {AI_DEMO.pTo}.</p><div className="grid grid-cols-3 gap-2">{[["Extra / month", AI_DEMO.extra, true], ["Median NW", AI_DEMO.to, false], ["Goal prob.", AI_DEMO.pTo, false]].map(([k, v, a]) => <div key={k as string} className={`rounded-xl p-2.5 ${a ? "bg-accent text-accent-ink" : "bg-card"}`}><div className="text-[9.5px] font-semibold uppercase tracking-[0.08em] opacity-70">{k}</div><div className="text-[14px] font-extrabold tnum">{v}</div></div>)}</div><HBars currency="EGP" rows={[{ label: "Current plan", value: AI_DEMO.barFrom, display: AI_DEMO.from, tone: "accent" }, { label: "Save 15% more", value: AI_DEMO.barTo, display: AI_DEMO.to, tone: "ink" }]} /><div className="flex flex-wrap gap-1.5 text-[11.5px] font-semibold"><span className="pill bg-ink px-3 py-1 text-ink-fg">Create this scenario</span><span className="pill bg-card px-3 py-1">Open goal planner</span><span className="ml-auto text-muted">View model context ▾</span></div></div></div>
     </div>
   );
 }
@@ -238,7 +249,7 @@ export function DemoMode() {
                 {scene.key === "logo" && <div className="text-center"><span className="mx-auto grid h-20 w-20 place-items-center pill bg-ink"><span className="h-8 w-8 pill border-[3px] border-accent" /></span><div className="mt-4 text-[40px] font-extrabold tracking-tight">FinTwin</div></div>}
                 {scene.key === "overview" && <div className="grid grid-cols-4 gap-3"><div className="card-dark col-span-2 p-5"><div className="label text-ink-fg/55">Net worth</div><div className="mt-2 text-[34px] font-extrabold tnum"><AnimatedNumber value={428500} format={(n) => formatMoney(n, "EGP")} /></div></div>{[["Income", 32000], ["Expenses", 21400], ["Savings", 10600], ["Coverage", 4.8]].map(([k, v]) => <div key={k as string} className="card p-4"><div className="label">{k}</div><div className="mt-1 text-[20px] font-extrabold tnum"><AnimatedNumber value={v as number} format={(n) => (k === "Coverage" ? `${n.toFixed(1)} mo` : formatMoney(n, "", { compact: true }))} /></div></div>)}</div>}
                 {scene.key === "twin" && <div className="grid grid-cols-2 gap-3">{[["Income", "EGP 32,000"], ["Expenses", "EGP 21,400"], ["Assets", "EGP 478,200"], ["Liabilities", "EGP 49,700"]].map(([k, v]) => <div key={k} className="card p-5"><div className="label">{k}</div><div className="mt-1 text-[26px] font-extrabold tnum">{v}</div><div className="mt-3 h-1.5 pill bg-card3"><motion.div className="h-full pill bg-accent" initial={{ width: 0 }} animate={{ width: "70%" }} transition={{ duration: 1 }} /></div></div>)}</div>}
-                {scene.key === "goal" && <div className="card mx-auto max-w-md p-6"><div className="flex items-center gap-3"><span className="grid h-11 w-11 place-items-center pill bg-accent text-accent-ink"><Icon name="Home" className="h-5 w-5" /></span><div><div className="text-[18px] font-extrabold">Buy a Home</div><div className="text-[12px] text-muted">EGP 1,500,000 · 8 years</div></div><StatusBadge tone="warn" className="ml-auto">Needs attention</StatusBadge></div><div className="mt-5 text-[30px] font-extrabold tnum"><AnimatedNumber value={126000} format={(n) => formatMoney(n, "EGP")} /></div><ProgressBar value={0.084} className="mt-3" marker={1} /><div className="mt-2 text-[12px] text-muted tnum">52% simulated probability under the current plan</div></div>}
+                {scene.key === "goal" && <div className="card mx-auto max-w-md p-6"><div className="flex items-center gap-3"><span className="grid h-11 w-11 place-items-center pill bg-accent text-accent-ink"><Icon name="Home" className="h-5 w-5" /></span><div><div className="text-[18px] font-extrabold">Buy a Home</div><div className="text-[12px] text-muted">EGP 1,500,000 · 8 years</div></div><StatusBadge tone="warn" className="ml-auto">Needs attention</StatusBadge></div><div className="mt-5 text-[30px] font-extrabold tnum"><AnimatedNumber value={126000} format={(n) => formatMoney(n, "EGP")} /></div><ProgressBar value={0.084} className="mt-3" marker={1} /><div className="mt-2 text-[12px] text-muted tnum">{formatPct(DEMO_BASELINE.goal?.probability ?? 0, 0)} simulated probability under the current plan</div></div>}
                 {scene.key === "scenario" && <div className="card mx-auto max-w-md p-6"><div className="label">Scenario builder</div><div className="mt-1 text-[22px] font-extrabold">Save 15% More</div><div className="mt-4 space-y-2">{["Savings +15%", "Goal contributions +15%", "Assumptions unchanged"].map((l, i) => <motion.div key={l} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 + i * 0.3 }} className="flex items-center gap-2 rounded-xl bg-card2 px-3 py-2 text-[13px]"><span className="h-1.5 w-1.5 pill bg-accent" />{l}</motion.div>)}</div><motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.6 }} className="mt-4"><span className="pill bg-accent px-4 py-2 text-[13px] font-bold text-accent-ink">Run Simulation</span></motion.div></div>}
                 {scene.key === "simulation" && <div className="text-center"><div className="text-[64px] font-extrabold tracking-tight tnum">{Math.round(pathCount)}</div><div className="label">of 600 futures</div><div className="mx-auto mt-4 h-1.5 w-64 pill bg-card3"><motion.div className="h-full pill bg-accent" initial={{ width: 0 }} animate={{ width: "100%" }} transition={{ duration: 3.2, ease: "linear" }} /></div></div>}
                 {scene.key === "distribution" && <div className="card w-full p-5"><div className="mb-2 flex items-baseline justify-between"><span className="text-[14px] font-bold">Future distribution</span><span className="text-[12px] text-muted tnum">Median {formatMoney(sim.final.p50, "EGP", { compact: true })}</span></div><FanChart series={sim.series} baseline={sim.baseline?.p50 ?? null} currency="EGP" height={240} showLegend={false} /></div>}

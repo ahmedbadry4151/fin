@@ -223,7 +223,7 @@ function runPaths(twin: SimTwin, a: EconAssumptions, params: ScenarioParams, pat
         income *= 1 + params.incomeChangePct / 100;
       }
       if (params.extraMonthlyIncome && active(params.extraIncomeStartMonth, params.extraIncomeDurationMonths, m)) {
-        income += params.extraMonthlyIncome * Math.pow(1 + expenseGrowthP, t);
+        income += params.extraMonthlyIncome * Math.pow(1 + incomeGrowthP, t);
       }
       if (params.oneTimeIncome && m === (params.oneTimeIncomeMonth ?? 1)) income += params.oneTimeIncome;
 
@@ -234,7 +234,9 @@ function runPaths(twin: SimTwin, a: EconAssumptions, params: ScenarioParams, pat
       if (params.extraMonthlyExpense && active(params.extraExpenseStartMonth, params.extraExpenseDurationMonths, m)) {
         expenses += params.extraMonthlyExpense * Math.pow(1 + expenseGrowthP, t);
       }
-      if (params.oneTimeCost && m === (params.oneTimeCostMonth ?? 1)) expenses += params.oneTimeCost;
+      if (params.oneTimeCost && m === (params.oneTimeCostMonth ?? 1)) {
+        expenses += params.oneTimeCost * Math.pow(1 + a.inflation, (m - 1) / 12);
+      }
 
       let debtPay = 0;
       for (const l of liabs) {
@@ -246,14 +248,15 @@ function runPaths(twin: SimTwin, a: EconAssumptions, params: ScenarioParams, pat
       }
 
       if (purchase && m === purchase.month) {
-        const down = purchase.price * purchase.downPaymentPct;
+        const price = purchase.price * Math.pow(1 + a.inflation, (purchase.month - 1) / 12);
+        const down = price * purchase.downPaymentPct;
         cash -= down;
         if (cash < 0) {
           inv += cash;
           cash = 0;
         }
-        assets.push({ value: purchase.price, growth: purchase.appreciation });
-        const principal = purchase.price - down;
+        assets.push({ value: price, growth: purchase.appreciation });
+        const principal = price - down;
         if (principal > 0) {
           const r = purchase.loanRate / 12;
           const n = Math.max(12, purchase.loanYears * 12);

@@ -34,11 +34,18 @@ export function AiView({ currency: c, userName, metrics: m, emergencySavings, go
     setLoading(true);
     try {
       const r = await fetch("/api/ai", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question: text }) });
-      if (!r.ok) throw new Error();
+      if (!r.ok) {
+        let detail = "";
+        try {
+          detail = (await r.json())?.error ?? "";
+        } catch {}
+        throw new Error(detail || `request failed (${r.status})`);
+      }
       const d = (await r.json()) as { answer: AiAnswer };
       setMessages((ms) => [...ms, { id: `a-${Date.now()}`, role: "assistant", content: d.answer.text, meta: d.answer }]);
-    } catch {
-      setMessages((ms) => [...ms, { id: `e-${Date.now()}`, role: "assistant", content: "AI analysis is temporarily unavailable. Your data is intact — try again in a moment.", meta: null }]);
+    } catch (e) {
+      const detail = e instanceof Error && e.message ? ` (${e.message})` : "";
+      setMessages((ms) => [...ms, { id: `e-${Date.now()}`, role: "assistant", content: `AI analysis is temporarily unavailable. Your data is intact — try again in a moment.${detail}`, meta: null }]);
     } finally {
       setLoading(false);
     }
