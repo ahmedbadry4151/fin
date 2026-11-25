@@ -13,7 +13,7 @@ import { Icon } from "../ui/states";
 import { AnimatedNumber, useCountUp } from "../motion/count-up";
 import { InfoTip } from "../motion/primitives";
 import { CircularProgress } from "../motion/progress";
-import { EASE_OUT } from "../motion/stagger";
+import { DUR, EASE_IN, EASE_IN_OUT, EASE_OUT, SPRING } from "../motion/tokens";
 import { useTheme } from "../providers";
 import { formatMoney, formatPct, toISODate, addMonths } from "@/lib/format";
 import { CURRENCIES, EMPLOYMENT_TYPES, EXPENSE_CATEGORIES, ASSET_TYPES, LIABILITY_TYPES, GOAL_TYPES, splitExpenses } from "@/lib/finance";
@@ -81,16 +81,16 @@ export function OnboardingWizard({ initialName, initialCurrency }: { initialName
           <div className="text-[12px] font-semibold text-muted tnum">Step {Math.min(step + 1, STEPS.length)} / {STEPS.length}</div>
         </div>
         <div className="mx-auto max-w-3xl px-4 pb-3">
-          <div className="h-1.5 w-full overflow-hidden pill bg-card3"><motion.div className="h-full pill bg-accent" animate={{ width: `${((step + 1) / STEPS.length) * 100}%` }} transition={{ duration: 0.5, ease: EASE_OUT }} /></div>
+          <div className="h-1.5 w-full overflow-hidden pill bg-card3"><motion.div className="h-full w-full origin-left pill bg-accent" initial={false} animate={{ scaleX: (step + 1) / STEPS.length }} transition={{ duration: DUR.rare, ease: EASE_IN_OUT }} /></div>
         </div>
       </header>
 
       <main className="mx-auto max-w-3xl px-4 py-8 pb-28">
         <AnimatePresence mode="wait" custom={dir}>
-          <motion.div key={step} custom={dir} initial={{ opacity: 0, x: dir * 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: dir * -16 }} transition={{ duration: 0.32, ease: EASE_OUT }}>
+          <motion.div key={step} custom={dir} initial={{ opacity: 0, x: dir * 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: dir * -12, transition: { duration: DUR.exit, ease: EASE_IN } }} transition={{ duration: DUR.page, ease: EASE_OUT }}>
             {step === 0 && (
               <section className="text-center">
-                <motion.span className="mx-auto grid h-16 w-16 place-items-center pill bg-ink" initial={{ scale: 0.8 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 260, damping: 18 }}><span className="h-7 w-7 pill border-[3px] border-accent" /></motion.span>
+                <motion.span className="mx-auto grid h-16 w-16 place-items-center pill bg-ink" initial={{ scale: 0.8 }} animate={{ scale: 1 }} transition={SPRING.soft}><span className="h-7 w-7 pill border-[3px] border-accent" /></motion.span>
                 <h1 className="mt-6 text-[36px] md:text-[44px] font-extrabold tracking-tight leading-[1.05]">Let's build your financial twin.</h1>
                 <p className="mx-auto mt-3 max-w-md text-[14.5px] text-muted">A few details are enough to create your starting model. Everything can be changed later.</p>
                 <div className="mx-auto mt-8 grid max-w-lg gap-3 sm:grid-cols-3">
@@ -165,7 +165,7 @@ export function OnboardingWizard({ initialName, initialCurrency }: { initialName
               <Section title="What are you building toward?" sub="Select any that apply — details appear as you pick.">
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">{GOAL_TYPES.map((t) => { const on = goals.some((g) => g.type === t.key); return <OptionCard key={t.key} compact selected={on} icon={<Icon name={GOAL_ICON[t.key]} className="h-4 w-4" />} title={t.label} onClick={() => setGoals(on ? goals.filter((g) => g.type !== t.key) : [...goals, { id: Date.now(), type: t.key, name: t.label, targetAmount: t.key === "emergency" ? Math.round(totals.essential * 6) : t.key === "home" ? 1500000 : t.key === "car" ? 450000 : 100000, currentAmount: 0, targetDate: toISODate(addMonths(new Date(), t.key === "home" ? 96 : 36)), monthlyContribution: 0 }])} />; })}</div>
                 <AnimatePresence>{goals.map((g) => (
-                  <motion.div key={g.id} initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
+                  <motion.div key={g.id} initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0, transition: { duration: DUR.exit, ease: EASE_IN } }} className="overflow-hidden">
                     <div className="card mt-3 grid gap-3 p-4 sm:grid-cols-5">
                       <Field label="Name" className="sm:col-span-1"><Input value={g.name} onChange={(e) => setGoals(goals.map((x) => (x.id === g.id ? { ...x, name: e.target.value } : x)))} /></Field>
                       <Field label="Target"><MoneyInput currency={c} value={g.targetAmount} onChange={(v) => setGoals(goals.map((x) => (x.id === g.id ? { ...x, targetAmount: v } : x)))} /></Field>
@@ -242,7 +242,7 @@ function RowEditor<T extends { id: number }>({ rows, onChange, empty, render }: 
     <div className="space-y-3">
       <AnimatePresence initial={false}>
         {rows.map((row) => (
-          <motion.div key={row.id} layout initial={{ opacity: 0, y: -8, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, height: 0 }} className="card flex items-start gap-3 p-3">
+          <motion.div key={row.id} layout initial={{ opacity: 0, y: -8, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, height: 0, transition: { duration: DUR.exit, ease: EASE_IN } }} className="card flex items-start gap-3 p-3">
             {render(row, (r) => onChange(rows.map((x) => (x.id === row.id ? r : x))))}
             <button onClick={() => onChange(rows.filter((x) => x.id !== row.id))} className="grid h-10 w-10 shrink-0 place-items-center pill text-subtle hover:bg-bad-soft hover:text-bad" aria-label="Remove"><Trash2 className="h-4 w-4" /></button>
           </motion.div>
@@ -273,13 +273,13 @@ export function BuildTwinScene({ name }: { name: string }) {
       <div className="w-full max-w-md text-center">
         <div className="relative mx-auto h-44 w-44">
           <CircularProgress value={pct / 100} size={176} stroke={6}><div><div className="text-[36px] font-extrabold tracking-tight tnum">{Math.round(pct)}</div><div className="label-sm">percent</div></div></CircularProgress>
-          {[0, 1, 2].map((i) => <motion.span key={i} className="absolute inset-0 rounded-full border border-accent/40" animate={{ scale: [1, 1.25 + i * 0.1], opacity: [0.5, 0] }} transition={{ duration: 2.4, repeat: Infinity, delay: i * 0.8, ease: "easeOut" }} />)}
+          {[0, 1, 2].map((i) => <motion.span key={i} className="absolute inset-0 rounded-full border border-accent/40" animate={{ scale: [1, 1.25 + i * 0.1], opacity: [0.5, 0] }} transition={{ duration: 2.4, repeat: Infinity, delay: i * 0.8, ease: EASE_OUT }} />)}
         </div>
         <h1 className="mt-8 text-[28px] font-extrabold tracking-tight">Building your Financial Twin…</h1>
         <p className="mt-1 text-[13px] text-muted">{name.split(" ")[0]}, this takes a few seconds.</p>
         <ol className="mx-auto mt-8 max-w-xs space-y-2 text-left">
           {BUILD_STAGES.map((s, i) => (
-            <motion.li key={s} animate={{ opacity: i <= stage ? 1 : 0.3, x: i <= stage ? 0 : 6 }} transition={{ duration: 0.35 }} className="flex items-center gap-3 text-[13.5px] font-semibold">
+            <motion.li key={s} animate={{ opacity: i <= stage ? 1 : 0.3, x: i <= stage ? 0 : 6 }} transition={{ duration: DUR.page, ease: EASE_OUT }} className="flex items-center gap-3 text-[13.5px] font-semibold">
               <span className={`grid h-6 w-6 place-items-center pill ${i < stage ? "bg-ink text-accent" : i === stage ? "bg-accent text-accent-ink" : "bg-card3 text-subtle"}`}>{i < stage ? <Check className="h-3.5 w-3.5" strokeWidth={3} /> : <span className="h-1.5 w-1.5 pill bg-current" />}</span>{s}
             </motion.li>
           ))}
@@ -292,8 +292,8 @@ export function BuildTwinScene({ name }: { name: string }) {
 export function CompleteScene({ name, netWorth, currency }: { name: string; netWorth: number; currency: string }) {
   return (
     <div className="glow grid min-h-screen place-items-center bg-page px-6">
-      <motion.div initial={{ opacity: 0, scale: 0.96, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} transition={{ duration: 0.5, ease: EASE_OUT }} className="w-full max-w-lg text-center">
-        <motion.span className="mx-auto grid h-16 w-16 place-items-center pill bg-ink text-accent" initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 300, damping: 16, delay: 0.1 }}><Check className="h-7 w-7" strokeWidth={2.5} /></motion.span>
+      <motion.div initial={{ opacity: 0, scale: 0.96, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} transition={{ duration: DUR.rare, ease: EASE_OUT }} className="w-full max-w-lg text-center">
+        <motion.span className="mx-auto grid h-16 w-16 place-items-center pill bg-ink text-accent" initial={{ scale: 0.8 }} animate={{ scale: 1 }} transition={{ ...SPRING.soft, delay: 0.1 }}><Check className="h-7 w-7" strokeWidth={2.5} /></motion.span>
         <h1 className="mt-6 text-[34px] font-extrabold tracking-tight leading-tight">Your Twin is ready, {name.split(" ")[0]}.</h1>
         <p className="mt-2 text-[14px] text-muted">Starting net worth in the model:</p>
         <div className="mt-1 text-[40px] font-extrabold tracking-tight tnum"><AnimatedNumber value={netWorth} format={(n) => formatMoney(n, currency)} duration={1400} /></div>

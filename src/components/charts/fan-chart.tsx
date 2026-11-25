@@ -1,9 +1,10 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
-import { useId, useEffect, useMemo, useState } from "react";
+import { motion } from "framer-motion";
+import { useId, useMemo, useState } from "react";
 import { formatMoney, monthLabel, yearLabel } from "@/lib/format";
-import { EASE_OUT } from "../motion/stagger";
+import { DUR, EASE_OUT } from "../motion/tokens";
+import { usePrefersReducedMotion } from "../motion/use-prefers-reduced-motion";
 
 type Series = { p5?: number[]; p15?: number[]; p25?: number[]; p50: number[]; p75?: number[]; p85?: number[]; p95?: number[]; mean?: number[] };
 
@@ -30,13 +31,9 @@ export function FanChart({
   showLegend?: boolean;
   className?: string;
 }) {
-  const reduce = useReducedMotion();
   const id = useId().replace(/:/g, "");
-  const [mounted, setMounted] = useState(false);
   const [hover, setHover] = useState<number | null>(null);
-  useEffect(() => {
-    setTimeout(() => setMounted(true), 0);
-  }, []);
+  const reduce = usePrefersReducedMotion();
   const W = 800;
   const H = height;
   const padL = compact ? 8 : 56;
@@ -61,14 +58,59 @@ export function FanChart({
   const x = (i: number) => padL + (i / Math.max(1, n - 1)) * (W - padL - padR);
   const y = (v: number) => padT + (1 - (v - minV) / (maxV - minV)) * (H - padT - padB);
 
-  const line = (arr: number[]) => arr.map((v, i) => `${i === 0 ? "M" : "L"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+  const points = (arr: number[]) => arr.map((v, i) => ({ x: x(i), y: y(v) }));
+
+  // Monotone cubic interpolation: smooth, continuous curves that never
+  // overshoot a monthly data point (unlike a plain Catmull-Rom spline).
+  const curve = (pts: { x: number; y: number }[]) => {
+    const count = pts.length;
+    if (count < 2) return "";
+    const dx: number[] = [];
+    const slope: number[] = [];
+    for (let i = 0; i < count - 1; i++) {
+      dx.push(pts[i + 1].x - pts[i].x);
+      slope.push((pts[i + 1].y - pts[i].y) / (dx[i] || 1));
+    }
+    const m: number[] = new Array(count);
+    m[0] = slope[0];
+    m[count - 1] = slope[count - 2];
+    for (let i = 1; i < count - 1; i++) {
+      if (slope[i - 1] * slope[i] <= 0) m[i] = 0;
+      else {
+        const w1 = 2 * dx[i] + dx[i - 1];
+        const w2 = dx[i] + 2 * dx[i - 1];
+        m[i] = (w1 + w2) / (w1 / slope[i - 1] + w2 / slope[i]);
+      }
+    }
+    for (let i = 0; i < count - 1; i++) {
+      if (slope[i] === 0) {
+        m[i] = 0;
+        m[i + 1] = 0;
+      } else {
+        const a = m[i] / slope[i];
+        const b = m[i + 1] / slope[i];
+        const mag = Math.hypot(a, b);
+        if (mag > 3) {
+          m[i] = ((3 * a) / mag) * slope[i];
+          m[i + 1] = ((3 * b) / mag) * slope[i];
+        }
+      }
+    }
+    let d = "";
+    for (let i = 0; i < count - 1; i++) {
+      const step = dx[i] / 3;
+      d += ` C${(pts[i].x + step).toFixed(1)},${(pts[i].y + m[i] * step).toFixed(1)} ${(pts[i + 1].x - step).toFixed(1)},${(pts[i + 1].y - m[i + 1] * step).toFixed(1)} ${pts[i + 1].x.toFixed(1)},${pts[i + 1].y.toFixed(1)}`;
+    }
+    return d;
+  };
+  const line = (arr: number[]) => {
+    const pts = points(arr);
+    return pts.length ? `M${pts[0].x.toFixed(1)},${pts[0].y.toFixed(1)}${curve(pts)}` : "";
+  };
   const band = (lo: number[], hi: number[]) => {
-    const top = hi.map((v, i) => `${i === 0 ? "M" : "L"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
-    const bottom = lo
-      .map((v, i) => `L${x(i).toFixed(1)},${y(v).toFixed(1)}`)
-      .reverse()
-      .join(" ");
-    return `${top} ${bottom} Z`;
+    const top = points(hi);
+    const bottom = points(lo).reverse();
+    return top.length ? `M${top[0].x.toFixed(1)},${top[0].y.toFixed(1)}${curve(top)} ${curve(bottom)} Z` : "";
   };
 
   const ticks = useMemo(() => {
@@ -86,7 +128,7 @@ export function FanChart({
     return out;
   }, [n]);
 
-  const onMove = (e: React.MouseEvent<SVGSVGElement>) => {
+  const onMove = (e: React.PointerEvent<SVGSVGElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const px = ((e.clientX - rect.left) / rect.width) * W;
     const i = Math.round(((px - padL) / (W - padL - padR)) * (n - 1));
@@ -96,13 +138,9 @@ export function FanChart({
   const draw = animate && !reduce;
   const hi = hover;
 
-  if (!mounted) {
-    return <div className={`relative ${className}`} style={{ height }} aria-hidden="true" />;
-  }
-
   return (
     <div className={`relative ${className}`}>
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height }} onMouseMove={onMove} onMouseLeave={() => setHover(null)} role="img" aria-label="Projected net worth range over time">
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height }} onPointerDown={onMove} onPointerMove={onMove} onPointerLeave={() => setHover(null)} role="img" aria-label="Projected net worth range over time">
         <defs>
           <pattern id={`hatch-${id}`} patternUnits="userSpaceOnUse" width="7" height="7" patternTransform="rotate(135)">
             <line x1="0" y1="0" x2="0" y2="7" stroke="var(--line-strong)" strokeWidth="1" />
@@ -125,16 +163,16 @@ export function FanChart({
           ))}
 
         {series.p5 && series.p95 && (
-          <motion.path d={band(series.p5, series.p95)} fill={`url(#hatch-${id})`} initial={draw ? { opacity: 0 } : false} animate={{ opacity: 1 }} transition={{ duration: 0.8, delay: 0.5 }} />
+          <motion.path d={band(series.p5, series.p95)} fill={`url(#hatch-${id})`} initial={draw ? { opacity: 0 } : false} animate={{ opacity: 1 }} transition={{ duration: DUR.rare, delay: DUR.rare }} />
         )}
         {series.p25 && series.p75 && (
-          <motion.path d={band(series.p25, series.p75)} fill="var(--accent)" fillOpacity={0.18} initial={draw ? { opacity: 0 } : false} animate={{ opacity: 1 }} transition={{ duration: 0.8, delay: 0.35 }} />
+          <motion.path d={band(series.p25, series.p75)} fill="var(--accent)" fillOpacity={0.18} initial={draw ? { opacity: 0 } : false} animate={{ opacity: 1 }} transition={{ duration: DUR.rare, delay: DUR.base }} />
         )}
-        {series.p5 && <motion.path d={line(series.p5)} fill="none" stroke="var(--subtle)" strokeWidth={1} strokeDasharray="3 4" initial={draw ? { pathLength: 0 } : false} animate={{ pathLength: 1 }} transition={{ duration: 1.1, ease: EASE_OUT, delay: 0.3 }} />}
-        {series.p95 && <motion.path d={line(series.p95)} fill="none" stroke="var(--subtle)" strokeWidth={1} strokeDasharray="1 4" initial={draw ? { pathLength: 0 } : false} animate={{ pathLength: 1 }} transition={{ duration: 1.1, ease: EASE_OUT, delay: 0.3 }} />}
-        {baseline && <motion.path d={line(baseline)} fill="none" stroke="var(--muted)" strokeWidth={1.5} strokeDasharray="5 5" initial={draw ? { pathLength: 0 } : false} animate={{ pathLength: 1 }} transition={{ duration: 1.1, ease: EASE_OUT, delay: 0.15 }} />}
-        {series.mean && <motion.path d={line(series.mean)} fill="none" stroke="var(--ink)" strokeWidth={1.2} strokeDasharray="2 3" initial={draw ? { pathLength: 0 } : false} animate={{ pathLength: 1 }} transition={{ duration: 1.1, ease: EASE_OUT, delay: 0.2 }} />}
-        <motion.path d={line(series.p50)} fill="none" stroke="var(--accent)" strokeWidth={2.5} strokeLinecap="round" initial={draw ? { pathLength: 0 } : false} animate={{ pathLength: 1 }} transition={{ duration: 1.2, ease: EASE_OUT }} />
+        {series.p5 && <motion.path d={line(series.p5)} fill="none" stroke="var(--muted)" strokeWidth={1} strokeDasharray="3 4" initial={draw ? { pathLength: 0 } : false} animate={{ pathLength: 1 }} transition={{ duration: DUR.rare, ease: EASE_OUT, delay: DUR.modal }} />}
+        {series.p95 && <motion.path d={line(series.p95)} fill="none" stroke="var(--muted)" strokeWidth={1} strokeDasharray="1 4" initial={draw ? { pathLength: 0 } : false} animate={{ pathLength: 1 }} transition={{ duration: DUR.rare, ease: EASE_OUT, delay: DUR.modal }} />}
+        {baseline && <motion.path d={line(baseline)} fill="none" stroke="var(--muted)" strokeWidth={1.5} strokeDasharray="5 5" initial={draw ? { pathLength: 0 } : false} animate={{ pathLength: 1 }} transition={{ duration: DUR.rare, ease: EASE_OUT, delay: DUR.fast }} />}
+        {series.mean && <motion.path d={line(series.mean)} fill="none" stroke="var(--ink)" strokeWidth={1.2} strokeDasharray="2 3" initial={draw ? { pathLength: 0 } : false} animate={{ pathLength: 1 }} transition={{ duration: DUR.rare, ease: EASE_OUT, delay: DUR.fast }} />}
+        <motion.path d={line(series.p50)} fill="none" stroke="var(--accent)" strokeWidth={2.5} strokeLinecap="round" initial={draw ? { pathLength: 0 } : false} animate={{ pathLength: 1 }} transition={{ duration: DUR.rare, ease: EASE_OUT }} />
 
         {goalTarget !== undefined && (
           <g>
@@ -157,26 +195,27 @@ export function FanChart({
       </svg>
 
       {hi !== null && (
-        <motion.div
-          initial={{ opacity: 0, y: 4 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.18 }}
-          className="pointer-events-none absolute top-2 z-10 pill bg-ink px-3 py-2 text-[11.5px] text-ink-fg shadow-float"
-          style={{ left: `${(x(hi) / W) * 100}%`, transform: `translateX(${x(hi) > W * 0.7 ? "-105%" : "8px"})` }}
-        >
-          <div className="font-semibold opacity-70">{hi === 0 ? "Today" : monthLabel(hi)}</div>
-          <div className="mt-0.5 flex items-baseline gap-2">
-            <span className="h-1.5 w-1.5 pill bg-accent" />
-            <span className="font-bold tnum">{formatMoney(series.p50[hi], currency)}</span>
-            <span className="opacity-60">median</span>
-          </div>
-          {series.p5 && series.p95 && (
-            <div className="tnum opacity-70">
-              {formatMoney(series.p5[hi], "", { compact: true })} – {formatMoney(series.p95[hi], "", { compact: true })} <span className="opacity-70">(5th–95th)</span>
+        <div className="pointer-events-none absolute top-2 z-10" style={{ left: `${(x(hi) / W) * 100}%`, transform: `translateX(${x(hi) > W * 0.7 ? "-105%" : "8px"})` }}>
+          <motion.div
+            initial={reduce ? false : { opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: DUR.fast }}
+            className="w-max min-w-[184px] rounded-[14px] bg-ink px-3 py-2 text-[11.5px] leading-[1.5] text-ink-fg shadow-float"
+          >
+            <div className="font-semibold opacity-60">{hi === 0 ? "Today" : monthLabel(hi)}</div>
+            <div className="mt-1 flex items-center gap-1.5 whitespace-nowrap">
+              <span className="h-1.5 w-1.5 shrink-0 pill bg-accent" />
+              <span className="font-bold tnum">{formatMoney(series.p50[hi], currency)}</span>
+              <span className="opacity-60">median</span>
             </div>
-          )}
-          {baseline && <div className="tnum opacity-70">Current plan {formatMoney(baseline[hi], "", { compact: true })}</div>}
-        </motion.div>
+            {series.p5 && series.p95 && (
+              <div className="mt-0.5 whitespace-nowrap tnum opacity-70">
+                {formatMoney(series.p5[hi], "", { compact: true })} – {formatMoney(series.p95[hi], "", { compact: true })} <span className="opacity-60">(5th–95th)</span>
+              </div>
+            )}
+            {baseline && <div className="mt-0.5 whitespace-nowrap tnum opacity-70">Current plan {formatMoney(baseline[hi], "", { compact: true })}</div>}
+          </motion.div>
+        </div>
       )}
 
       {showLegend && !compact && (
@@ -185,8 +224,8 @@ export function FanChart({
           {series.mean && <Legend swatch={<span className="h-[2px] w-5 border-t-2 border-dotted border-ink" />} label="Expected (mean)" />}
           {series.p25 && <Legend swatch={<span className="h-3 w-5 rounded-sm bg-accent/20" />} label="25th–75th" />}
           {series.p5 && <Legend swatch={<span className="h-3 w-5 rounded-sm hatch border border-line" />} label="5th–95th uncertainty" />}
-          {series.p5 && <Legend swatch={<span className="h-[2px] w-5 border-t border-dashed border-subtle" />} label="Stress (5th)" />}
-          {series.p95 && <Legend swatch={<span className="h-[2px] w-5 border-t border-dotted border-subtle" />} label="Optimistic (95th)" />}
+          {series.p5 && <Legend swatch={<span className="h-[2px] w-5 border-t border-dashed border-muted" />} label="Stress (5th)" />}
+          {series.p95 && <Legend swatch={<span className="h-[2px] w-5 border-t border-dotted border-muted" />} label="Optimistic (95th)" />}
           {baseline && <Legend swatch={<span className="h-[2px] w-5 border-t-2 border-dashed border-muted" />} label="Current plan" />}
         </div>
       )}

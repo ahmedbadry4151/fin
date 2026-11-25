@@ -41,7 +41,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
   ref,
 ) {
   const cls = cn(
-    "inline-flex items-center justify-center pill font-semibold whitespace-nowrap select-none press focus-ring transition-colors duration-200",
+    "inline-flex items-center justify-center pill font-semibold whitespace-nowrap select-none press focus-ring",
     VARIANT[variant],
     SIZE[size],
     (disabled || loading) && "opacity-60 pointer-events-none",

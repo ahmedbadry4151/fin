@@ -11,7 +11,8 @@ import { Field, Input, Select, Toggle, OptionCard } from "../ui/field";
 import { StatusBadge, PillTabs, FilterPill, SegmentedControl } from "../ui/pill";
 import { ConfirmDialog } from "../ui/overlay";
 import { Avatar, EmptyState, Icon } from "../ui/states";
-import { Stagger, StaggerItem, EASE_OUT } from "../motion/stagger";
+import { Stagger, StaggerItem } from "../motion/stagger";
+import { DUR, EASE_IN, EASE_OUT } from "../motion/tokens";
 import { useToast } from "../motion/toast";
 import { useTheme } from "../providers";
 import { formatDate, relativeTime } from "@/lib/format";
@@ -51,7 +52,7 @@ export function ProfileView({ user, edit = false }: { user: UserData; edit?: boo
   return (
     <>
       <PageHeader eyebrow="Account · Profile" title="Profile" actions={<><Button variant="secondary" onClick={() => setEditing((e) => !e)}>{editing ? "Cancel" : "Edit profile"}</Button><Button variant="ghost" onClick={logout} icon={<LogOut className="h-4 w-4" />}>Sign out</Button></>} />
-      <Stagger stagger={0.06} className="space-y-5">
+      <Stagger className="space-y-5">
         <StaggerItem>
           <Card dark className="flex flex-wrap items-center gap-5">
             <Avatar name={user.name} size={72} className="!bg-accent !text-accent-ink text-[24px]" />
@@ -104,7 +105,7 @@ export function NotificationsView({ items }: { items: Notif[] }) {
         <ul className="space-y-2">
           <AnimatePresence initial={false}>
             {shown.map((n, i) => (
-              <motion.li key={n.id} layout initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.3, delay: i * 0.03, ease: EASE_OUT }}>
+              <motion.li key={n.id} layout initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, height: 0, transition: { duration: DUR.exit, ease: EASE_IN } }} transition={{ duration: DUR.modal, delay: Math.min(i, 5) * 0.04, ease: EASE_OUT }}>
                 <div className={`card flex items-start gap-3 p-4 ${n.read ? "" : "ring-1 ring-accent/60"}`}>
                   <span className={`grid h-9 w-9 shrink-0 place-items-center pill ${n.read ? "bg-card3" : "bg-accent text-accent-ink"}`}><Icon name={KIND_ICON[n.kind] ?? "Bell"} className="h-4 w-4" /></span>
                   <button onClick={() => open(n)} className="min-w-0 flex-1 text-left"><div className="flex items-center gap-2"><span className="text-[13.5px] font-bold">{n.title}</span>{!n.read && <span className="h-1.5 w-1.5 pill bg-accent" />}</div><div className="text-[12.5px] text-muted">{n.body}</div><div className="mt-1 text-[11px] text-subtle capitalize">{n.kind} · {relativeTime(n.createdAt)}</div></button>

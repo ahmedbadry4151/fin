@@ -57,11 +57,11 @@ export function TwinView({ currency: c, metrics: m, profile, accounts, assets, l
     <>
       <PageHeader eyebrow="Financial Life · Financial Twin" title="Your Financial Twin" description="The living model every simulation starts from. Edit any value — scenarios, goals, and AI explanations update with it." actions={<Button href="/simulations/new" variant="accent">Simulate current plan</Button>} />
 
-      <Stagger stagger={0.07} className="space-y-5">
+      <Stagger className="space-y-5">
         <StaggerItem>
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             <MetricCard dark label="Net Worth" value={m.netWorth} format={(n) => formatMoney(n, c)} delta={<span className="text-accent">{formatMoney(m.totalAssets, c, { compact: true })} assets − {formatMoney(m.totalDebt, c, { compact: true })} debt</span>} />
-            <MetricCard label="Monthly Cash Flow" value={m.savings} format={(n) => formatMoney(n, c, { sign: true })} delta={`${formatPct(m.savingsRate, 1)} of income saved`} deltaTone="good" />
+            <MetricCard label="Monthly Cash Flow" value={m.savings} format={(n) => formatMoney(n, c, { sign: true })} delta={`${formatPct(m.savingsRate, 1)} of income saved`} deltaTone={m.savings >= 0 ? "good" : "warn"} />
             <MetricCard label="Emergency Coverage" display={formatMonths(m.emergencyCoverage)} delta={`${formatMoney(profile.emergencySavings, c)} buffer`} />
             <MetricCard label="Liquid Assets" value={m.liquid} format={(n) => formatMoney(n, c)} delta={`${formatMoney(m.investments, c, { compact: true })} invested`} />
           </div>

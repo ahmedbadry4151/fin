@@ -13,6 +13,7 @@ import { AnimatedNumber } from "../motion/count-up";
 import { StatusBadge, Chip, type Tone } from "../ui/pill";
 import { Icon } from "../ui/states";
 import { cn } from "../ui/button";
+import { DUR, EASE_OUT } from "../motion/tokens";
 
 /* ---------------- Goal ---------------- */
 export const GOAL_ICON: Record<string, string> = { emergency: "ShieldCheck", home: "Home", car: "Car", marriage: "Heart", education: "GraduationCap", travel: "Plane", retirement: "Sunset", business: "Rocket", debt_free: "Unlink", wealth: "TrendingUp", custom: "Target" };
@@ -84,7 +85,7 @@ export type ScenarioCardData = { id: number; name: string; category: string; des
 export function ScenarioCard({ scenario, currency, outcome, onDuplicate, onDelete, iconName, index = 0 }: { scenario: ScenarioCardData; currency: string; outcome?: ReactNode; onDuplicate?: () => void; onDelete?: () => void; iconName?: string; index?: number }) {
   const lines = describeParams(scenario.params, currency);
   return (
-    <motion.article layoutId={`scenario-${scenario.id}`} className="card card-hover group flex flex-col p-5" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: index * 0.05 }}>
+    <motion.article layoutId={`scenario-${scenario.id}`} className="card card-hover group flex flex-col p-5" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: DUR.base, delay: Math.min(index, 5) * 0.04, ease: EASE_OUT }}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
           <span className="grid h-10 w-10 place-items-center pill bg-card3 text-ink transition-transform group-hover:translate-x-0.5">

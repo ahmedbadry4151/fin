@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Check } from "lucide-react";
 import { forwardRef, useId, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from "react";
 import { cn } from "./button";
+import { DUR, SPRING } from "../motion/tokens";
 
 export function Field({ label, hint, error, children, className, right }: { label?: ReactNode; hint?: ReactNode; error?: ReactNode; children: ReactNode; className?: string; right?: ReactNode }) {
   return (
@@ -98,9 +99,9 @@ export function Toggle({ checked, onChange, label, description, className }: { c
         className={cn("relative h-6 w-11 shrink-0 pill transition-colors duration-200 focus-ring", checked ? "bg-ink" : "bg-card3")}
       >
         <motion.span
-          className={cn("absolute top-0.5 h-5 w-5 pill shadow-card", checked ? "bg-accent" : "bg-card")}
-          animate={{ left: checked ? 22 : 2 }}
-          transition={{ type: "spring", stiffness: 400, damping: 32 }}
+          className={cn("absolute left-0.5 top-0.5 h-5 w-5 pill shadow-card", checked ? "bg-accent" : "bg-card")}
+          animate={{ x: checked ? 20 : 0 }}
+          transition={SPRING.pill}
         />
       </button>
     </label>
@@ -118,7 +119,7 @@ export function Checkbox({ checked, onChange, label, className }: { checked: boo
         className={cn("grid h-5 w-5 place-items-center rounded-[7px] border transition-colors focus-ring", checked ? "bg-ink border-ink text-ink-fg" : "bg-card border-line-strong")}
       >
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-          <motion.path d="M5 13l4 4L19 7" initial={false} animate={{ pathLength: checked ? 1 : 0, opacity: checked ? 1 : 0 }} transition={{ duration: 0.25 }} />
+          <motion.path d="M5 13l4 4L19 7" initial={false} animate={{ pathLength: checked ? 1 : 0, opacity: checked ? 1 : 0 }} transition={{ duration: DUR.fast }} />
         </svg>
       </button>
       {label}
@@ -132,9 +133,9 @@ export function OptionCard({ selected, onClick, title, hint, icon, className, co
       type="button"
       onClick={onClick}
       aria-pressed={selected}
-      whileTap={{ scale: 0.98 }}
+      whileTap={{ scale: 0.96 }}
       animate={{ scale: selected ? 1 : 0.985 }}
-      transition={{ type: "spring", stiffness: 400, damping: 30 }}
+      transition={SPRING.pill}
       className={cn(
         "relative flex w-full items-start gap-3 rounded-2xl border text-left transition-colors focus-ring",
         compact ? "p-3" : "p-4",

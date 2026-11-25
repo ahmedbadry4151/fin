@@ -9,7 +9,7 @@ import { Button } from "../ui/button";
 import { Select } from "../ui/field";
 import { StatusBadge } from "../ui/pill";
 import { useToast } from "../motion/toast";
-import { EASE_OUT } from "../motion/stagger";
+import { DUR, EASE_IN, EASE_OUT, SPRING, STEP } from "../motion/tokens";
 import { formatMoney } from "@/lib/format";
 import { EXPENSE_CATEGORIES } from "@/lib/finance";
 
@@ -115,7 +115,7 @@ export function ImportView({ currency: c, accounts, existingKeys }: { currency: 
         {STEPS.map((s, i) => (
           <li key={s} className="flex items-center gap-2">
             <span className={`relative inline-flex items-center gap-2 pill px-3 py-1.5 text-[12px] font-semibold ${i === step ? "text-ink-fg" : i < step ? "text-ink" : "text-muted"}`}>
-              {i === step && <motion.span layoutId="import-step" className="absolute inset-0 pill bg-ink" transition={{ type: "spring", stiffness: 400, damping: 32 }} />}
+              {i === step && <motion.span layoutId="import-step" className="absolute inset-0 pill bg-ink" transition={SPRING.pill} />}
               <span className="relative z-10 grid h-4 w-4 place-items-center pill bg-current/10 text-[10px]">{i < step ? <Check className="h-3 w-3" /> : i + 1}</span>
               <span className="relative z-10">{s}</span>
             </span>
@@ -125,7 +125,7 @@ export function ImportView({ currency: c, accounts, existingKeys }: { currency: 
       </ol>
 
       <AnimatePresence mode="wait">
-        <motion.div key={step} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.3, ease: EASE_OUT }}>
+        <motion.div key={step} initial={STEP.enter} animate={STEP.show} exit={{ ...STEP.exit, transition: { duration: DUR.exit, ease: EASE_IN } }} transition={{ duration: DUR.modal, ease: EASE_OUT }}>
           {step === 0 && (
             <Card>
               <div
@@ -184,7 +184,7 @@ export function ImportView({ currency: c, accounts, existingKeys }: { currency: 
                   <thead className="bg-card2 text-left"><tr>{["Date", "Description", "Category", "Type", "Amount"].map((h) => <th key={h} className="label px-4 py-2.5 font-semibold">{h}</th>)}</tr></thead>
                   <tbody className="divide-y divide-line">
                     {importable.slice(0, 50).map((m, i) => (
-                      <motion.tr key={i} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(i, 15) * 0.03 }}>
+                      <motion.tr key={i} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(i, 5) * 0.04, duration: DUR.fast, ease: EASE_OUT }}>
                         <td className="px-4 py-2 tnum">{m.date}</td><td className="px-4 py-2 font-semibold">{m.description}</td><td className="px-4 py-2 capitalize">{m.category}</td><td className="px-4 py-2">{m.type}</td><td className="px-4 py-2 text-right tnum font-bold">{m.type === "expense" ? "−" : "+"}{formatMoney(m.amount, c)}</td>
                       </motion.tr>
                     ))}
@@ -196,7 +196,7 @@ export function ImportView({ currency: c, accounts, existingKeys }: { currency: 
           )}
           {step === 4 && (
             <Card className="grid place-items-center py-16 text-center">
-              <motion.span className="grid h-16 w-16 place-items-center pill bg-ink text-accent" initial={{ scale: 0.8 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 300, damping: 18 }}>
+              <motion.span className="grid h-16 w-16 place-items-center pill bg-ink text-accent" initial={{ scale: 0.8 }} animate={{ scale: 1 }} transition={SPRING.soft}>
                 {importing ? <motion.span className="h-6 w-6 pill border-2 border-accent border-t-transparent" animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 0.9, ease: "linear" }} /> : <Check className="h-7 w-7" strokeWidth={2.5} />}
               </motion.span>
               <div className="mt-4 text-[20px] font-extrabold tracking-tight">{importing ? "Importing…" : `${done} transactions imported`}</div>

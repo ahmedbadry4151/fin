@@ -60,7 +60,7 @@ export function PublicPage({ kind }: { kind: "product" | "how" | "features" | "s
     return (
       <>
         <Hero eyebrow="Features" title="Everything a financial laboratory needs." />
-        <Stagger inView stagger={0.05} className="mx-auto grid max-w-6xl gap-4 px-5 pb-16 md:grid-cols-2 lg:grid-cols-4">{FEATURES.map((f) => <StaggerItem key={f.t}><div className="card h-full p-5"><span className="grid h-10 w-10 place-items-center pill bg-ink text-ink-fg"><Icon name={f.i} className="h-4.5 w-4.5" /></span><div className="mt-4 text-[15px] font-bold">{f.t}</div><p className="mt-1 text-[12.5px] text-muted">{f.d}</p></div></StaggerItem>)}</Stagger>
+        <Stagger inView className="mx-auto grid max-w-6xl gap-4 px-5 pb-16 md:grid-cols-2 lg:grid-cols-4">{FEATURES.map((f) => <StaggerItem key={f.t}><div className="card h-full p-5"><span className="grid h-10 w-10 place-items-center pill bg-ink text-ink-fg"><Icon name={f.i} className="h-4.5 w-4.5" /></span><div className="mt-4 text-[15px] font-bold">{f.t}</div><p className="mt-1 text-[12.5px] text-muted">{f.d}</p></div></StaggerItem>)}</Stagger>
         <div className="mx-auto max-w-6xl px-5 pb-16"><AiDemoCard /></div>
         <CTA />
       </>
@@ -72,7 +72,7 @@ export function PublicPage({ kind }: { kind: "product" | "how" | "features" | "s
         <Hero eyebrow="Scenario showcase" title="Decisions you can rehearse." text="Each scenario is an explicit, editable change to the model." />
         <div className="mx-auto max-w-6xl space-y-10 px-5 pb-16">
           {SCENARIO_CATEGORIES.filter((c) => c.key !== "custom").map((cat) => (
-            <div key={cat.key}><Reveal><div className="label">{cat.label}</div><div className="text-[13px] text-muted">{cat.blurb}</div></Reveal><Stagger inView stagger={0.04} className="mt-4 grid gap-3 md:grid-cols-2 lg:grid-cols-3">{SCENARIO_TEMPLATES.filter((t) => t.category === cat.key).map((t) => <StaggerItem key={t.key}><div id={t.key} className="card h-full p-5"><div className="flex items-center gap-3"><span className="grid h-10 w-10 place-items-center pill bg-card3"><Icon name={t.icon} className="h-4.5 w-4.5" /></span><div className="text-[15px] font-bold">{t.name}</div></div><p className="mt-3 text-[12.5px] text-muted">{t.description}</p><ul className="mt-3 space-y-1 text-[11.5px]">{describeParams(t.params).slice(0, 3).map((l) => <li key={l} className="flex gap-2"><span className="mt-1.5 h-1.5 w-1.5 shrink-0 pill bg-accent" />{l}</li>)}</ul></div></StaggerItem>)}</Stagger></div>
+            <div key={cat.key}><Reveal><div className="label">{cat.label}</div><div className="text-[13px] text-muted">{cat.blurb}</div></Reveal><Stagger inView className="mt-4 grid gap-3 md:grid-cols-2 lg:grid-cols-3">{SCENARIO_TEMPLATES.filter((t) => t.category === cat.key).map((t) => <StaggerItem key={t.key}><div id={t.key} className="card h-full p-5"><div className="flex items-center gap-3"><span className="grid h-10 w-10 place-items-center pill bg-card3"><Icon name={t.icon} className="h-4.5 w-4.5" /></span><div className="text-[15px] font-bold">{t.name}</div></div><p className="mt-3 text-[12.5px] text-muted">{t.description}</p><ul className="mt-3 space-y-1 text-[11.5px]">{describeParams(t.params).slice(0, 3).map((l) => <li key={l} className="flex gap-2"><span className="mt-1.5 h-1.5 w-1.5 shrink-0 pill bg-accent" />{l}</li>)}</ul></div></StaggerItem>)}</Stagger></div>
           ))}
         </div>
         <CTA />

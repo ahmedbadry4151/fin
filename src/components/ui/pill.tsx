@@ -4,6 +4,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import type { ReactNode } from "react";
 import { cn } from "./button";
+import { SPRING } from "../motion/tokens";
 
 export type Tone = "neutral" | "accent" | "good" | "warn" | "bad" | "ink";
 
@@ -77,7 +78,7 @@ export function SegmentedControl<T extends string>({
               active ? (dark ? "text-ink-fg" : "text-ink-fg") : "text-muted hover:text-ink",
             )}
           >
-            {active && <motion.span layoutId={layoutId} className="absolute inset-0 pill bg-ink shadow-card" transition={{ type: "spring", stiffness: 400, damping: 32 }} />}
+            {active && <motion.span layoutId={layoutId} className="absolute inset-0 pill bg-ink shadow-card" transition={SPRING.pill} />}
             <span className="relative z-10 inline-flex items-center gap-1.5">
               {o.label}
               {o.count !== undefined && <span className={cn("tnum text-[10px] opacity-70")}>{o.count}</span>}
@@ -97,7 +98,7 @@ export function PillTabs({ items, current, layoutId, className }: { items: { hre
         const active = it.href === current;
         return (
           <Link key={it.href} href={it.href} className={cn("relative pill px-3.5 py-1.5 text-[12.5px] font-semibold whitespace-nowrap focus-ring transition-colors", active ? "text-ink-fg" : "text-muted hover:text-ink")}>
-            {active && <motion.span layoutId={layoutId} className="absolute inset-0 pill bg-ink shadow-card" transition={{ type: "spring", stiffness: 400, damping: 32 }} />}
+            {active && <motion.span layoutId={layoutId} className="absolute inset-0 pill bg-ink shadow-card" transition={SPRING.pill} />}
             <span className="relative z-10">{it.label}</span>
           </Link>
         );

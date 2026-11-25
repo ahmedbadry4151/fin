@@ -12,7 +12,7 @@ export function formatMoney(value: number, currency = "EGP", opts: { compact?: b
   } else {
     body = abs.toLocaleString("en-US", { maximumFractionDigits: opts.decimals ?? 0, minimumFractionDigits: opts.decimals ?? 0 });
   }
-  return `${sign}${currency} ${body}`;
+  return `${sign}${currency ? `${currency} ` : ""}${body}`;
 }
 
 export function formatNumber(value: number, decimals = 0) {

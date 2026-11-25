@@ -14,7 +14,8 @@ import { ReportCard, REPORT_ICON } from "../domain/cards";
 import { FanChart } from "../charts/fan-chart";
 import { HBars } from "../charts/charts";
 import { ProgressBar } from "../motion/progress";
-import { Stagger, StaggerItem, EASE_OUT } from "../motion/stagger";
+import { Stagger, StaggerItem } from "../motion/stagger";
+import { DUR, EASE_IN, EASE_OUT, SPRING, STEP } from "../motion/tokens";
 import { useToast } from "../motion/toast";
 import { exportReport } from "@/lib/client-api";
 import { formatMoney, formatPct, formatMonths, formatDate } from "@/lib/format";
@@ -47,7 +48,7 @@ export function ReportsView({ reports }: { reports: { id: number; name: string; 
       {reports.length === 0 ? (
         <EmptyState icon="FileText" title="Turn your financial model into a report" description="Reports can include simulation results, assumptions and AI explanations." action={<Button href="/reports/new">Build a report</Button>} />
       ) : (
-        <Stagger stagger={0.05} className="space-y-3">
+        <Stagger className="space-y-3">
           {reports.map((r) => (
             <StaggerItem key={r.id}><ReportCard report={r} /></StaggerItem>
           ))}
@@ -91,11 +92,11 @@ export function ReportBuilder({ scenarios, goals, simulations }: { scenarios: { 
       <PageHeader eyebrow={<span><Link href="/reports" className="hover:text-ink">Reports</Link> / Builder</span>} title="Report Builder" description="Choose what to include. The preview renders as a document you can print to PDF or export as data." />
       <ol className="mb-6 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
         {STEPS.map((s, i) => (
-          <li key={s}><button onClick={() => setStep(i)} className={`relative pill px-3 py-1.5 text-[12px] font-semibold ${i === step ? "text-ink-fg" : i < step ? "text-ink" : "text-muted"}`}>{i === step && <motion.span layoutId="report-step" className="absolute inset-0 pill bg-ink" transition={{ type: "spring", stiffness: 400, damping: 32 }} />}<span className="relative z-10 inline-flex items-center gap-1">{i < step && <Check className="h-3 w-3" />}{s}</span></button></li>
+          <li key={s}><button onClick={() => setStep(i)} className={`relative pill px-3 py-1.5 text-[12px] font-semibold ${i === step ? "text-ink-fg" : i < step ? "text-ink" : "text-muted"}`}>{i === step && <motion.span layoutId="report-step" className="absolute inset-0 pill bg-ink" transition={SPRING.pill} />}<span className="relative z-10 inline-flex items-center gap-1">{i < step && <Check className="h-3 w-3" />}{s}</span></button></li>
         ))}
       </ol>
       <AnimatePresence mode="wait">
-        <motion.div key={step} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.3, ease: EASE_OUT }}>
+        <motion.div key={step} initial={STEP.enter} animate={STEP.show} exit={{ ...STEP.exit, transition: { duration: DUR.exit, ease: EASE_IN } }} transition={{ duration: DUR.modal, ease: EASE_OUT }}>
           <Card className="space-y-4">
             {step === 0 && <div className="grid gap-2 sm:grid-cols-2">{TYPES.map((t) => <OptionCard key={t.key} selected={cfg.type === t.key} onClick={() => setCfg({ ...cfg, type: t.key })} title={t.label} hint={t.hint} icon={<Icon name={REPORT_ICON[t.key]} className="h-4 w-4" />} />)}</div>}
             {step === 1 && <Field label="Date range"><Select value={cfg.range} onChange={(e) => setCfg({ ...cfg, range: e.target.value })}><option value="month">This month</option><option value="quarter">Last 3 months</option><option value="half">Last 6 months</option><option value="year">Last 12 months</option></Select></Field>}

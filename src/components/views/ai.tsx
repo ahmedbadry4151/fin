@@ -11,7 +11,7 @@ import { StatusBadge } from "../ui/pill";
 import { Collapse } from "../motion/primitives";
 import { Skeleton, Avatar } from "../ui/states";
 import { HBars } from "../charts/charts";
-import { EASE_OUT } from "../motion/stagger";
+import { DUR, EASE_OUT } from "../motion/tokens";
 import { formatMoney, formatMonths, formatPct } from "@/lib/format";
 import { SUGGESTED_QUESTIONS, type AiAnswer } from "@/lib/intelligence";
 import type { TwinMetrics } from "@/lib/finance";
@@ -73,9 +73,9 @@ export function AiView({ currency: c, userName, metrics: m, emergencySavings, go
     <>
       <PageHeader eyebrow="Intelligence · AI Financial Intelligence" title="Ask your Financial Twin" description="Every answer is computed from your model and simulations. Expand “View model context” to see exactly what was used." actions={messages.length > 0 && <Button variant="secondary" size="sm" icon={<Trash2 className="h-4 w-4" />} onClick={clear}>Clear conversation</Button>} />
       <div className="grid gap-5 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <Card className="flex min-h-[560px] flex-col p-0">
-            <div className="flex-1 space-y-5 overflow-y-auto px-5 py-5">
+        <div className="min-w-0 lg:col-span-2">
+          <Card className="flex min-h-[560px] min-w-0 flex-col p-0">
+            <div className="min-w-0 flex-1 space-y-5 overflow-y-auto px-5 py-5">
               {messages.length === 0 && !loading && (
                 <div className="grid place-items-center py-10 text-center">
                   <span className="grid h-12 w-12 place-items-center pill bg-ink text-accent"><Sparkles className="h-5 w-5" /></span>
@@ -85,7 +85,7 @@ export function AiView({ currency: c, userName, metrics: m, emergencySavings, go
               )}
               <AnimatePresence initial={false}>
                 {messages.map((msg) => (
-                  <motion.div key={msg.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: EASE_OUT }} className={`flex gap-3 ${msg.role === "user" ? "justify-end" : ""}`}>
+                  <motion.div key={msg.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: DUR.modal, ease: EASE_OUT }} className={`flex gap-3 ${msg.role === "user" ? "justify-end" : ""}`}>
                     {msg.role === "assistant" && <span className="mt-1 grid h-8 w-8 shrink-0 place-items-center pill bg-ink text-accent"><Sparkles className="h-4 w-4" /></span>}
                     <div className={`max-w-[85%] ${msg.role === "user" ? "pill bg-ink px-4 py-2.5 text-[13.5px] font-medium text-ink-fg" : "w-full"}`}>
                       {msg.role === "user" ? msg.content : <AssistantMessage msg={msg} c={c} onFollowUp={ask} />}
@@ -151,7 +151,7 @@ function AssistantMessage({ msg, c, onFollowUp }: { msg: Msg; c: string; onFollo
       {a && a.kpis.length > 0 && (
         <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
           {a.kpis.map((k, i) => (
-            <motion.div key={k.label + i} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + i * 0.06 }} className={`rounded-2xl p-3 ${TONE[k.tone ?? "neutral"]}`}>
+            <motion.div key={k.label + i} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + Math.min(i, 5) * 0.04, duration: DUR.rare, ease: EASE_OUT }} className={`rounded-2xl p-3 ${TONE[k.tone ?? "neutral"]}`}>
               <div className="text-[10px] font-semibold uppercase tracking-[0.08em] opacity-70">{k.label}</div>
               <div className="mt-0.5 text-[15px] font-extrabold tnum leading-tight">{k.value}</div>
               {k.hint && <div className="text-[10.5px] opacity-70">{k.hint}</div>}

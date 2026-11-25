@@ -33,7 +33,7 @@ export function OverviewView({ user, metrics: m, econ, emergencySavings, goals, 
   const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
   return (
-    <Stagger stagger={0.07} className="space-y-5">
+    <Stagger className="space-y-5">
       <StaggerItem>
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
@@ -55,9 +55,9 @@ export function OverviewView({ user, metrics: m, econ, emergencySavings, goals, 
       <StaggerItem>
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
           <MetricCard label="Net Worth" value={m.netWorth} format={(n) => formatMoney(n, c)} dark size="md" delta={<span className="text-accent">Assets {formatMoney(m.totalAssets, c, { compact: true })} · Debt {formatMoney(m.totalDebt, c, { compact: true })}</span>} href="/twin" />
-          <MetricCard label="Monthly Income" value={m.income} format={(n) => formatMoney(n, c)} delay={0.1} delta={<span>+{formatPct(econ.incomeGrowth, 0)} assumed growth</span>} />
-          <MetricCard label="Expenses" value={m.expenses} format={(n) => formatMoney(n, c)} delay={0.2} delta={<span>Essential {formatMoney(m.essential, c, { compact: true })} · Flexible {formatMoney(m.flexible, c, { compact: true })}</span>} />
-          <MetricCard label="Savings" value={m.savings} format={(n) => formatMoney(n, c)} delay={0.3} deltaTone="good" delta={<span>{formatPct(m.savingsRate, 1)} savings rate</span>} />
+            <MetricCard label="Monthly Income" value={m.income} format={(n) => formatMoney(n, c)} delta={<span>+{formatPct(econ.incomeGrowth, 0)} assumed growth</span>} />
+            <MetricCard label="Expenses" value={m.expenses} format={(n) => formatMoney(n, c)} delta={<span>Essential {formatMoney(m.essential, c, { compact: true })} · Flexible {formatMoney(m.flexible, c, { compact: true })}</span>} />
+            <MetricCard label="Savings" value={m.savings} format={(n) => formatMoney(n, c)} deltaTone="good" delta={<span>{formatPct(m.savingsRate, 1)} savings rate</span>} />
           <MetricCard label="Financial Stability" display={<span className="capitalize">{m.stability}</span>} delta={<StatusBadge tone={stabilityTone}>{formatMonths(m.emergencyCoverage)} covered</StatusBadge>} href="/health" />
         </div>
       </StaggerItem>

@@ -43,7 +43,7 @@ export function AnalyticsOverview({ currency: c, metrics: m, months, netWorthHis
   const catTotals = aggregateCategories(months);
   return (
     <AnalyticsShell current="/analytics" title="Financial Analytics" description="Level 1: what happened. Level 2: why. Each panel links deeper.">
-      <Stagger stagger={0.06} className="space-y-5">
+      <Stagger className="space-y-5">
         <StaggerItem>
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             <MetricCard dark label="Net Worth" value={m.netWorth} format={(n) => formatMoney(n, c)} href="/analytics/net-worth" delta={<span className="text-accent">{netWorthHistory.length > 1 ? formatMoney(m.netWorth - netWorthHistory[0].value, c, { compact: true, sign: true }) + " over 6 months" : "Today"}</span>} />
@@ -167,7 +167,7 @@ export function HealthView({ currency: c, metrics: m, netWorthTrend, goalProgres
   return (
     <>
       <PageHeader eyebrow="Intelligence · Financial Health" title="Financial Health" description="Six measurable dimensions instead of one artificial score. Each shows its value, trend and why it matters." />
-      <Stagger stagger={0.06} className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <Stagger className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {dims.map((d, i) => (
           <StaggerItem key={d.key}>
             <Link href={d.href} className="card card-hover block h-full p-5">

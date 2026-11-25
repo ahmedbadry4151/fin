@@ -2,28 +2,29 @@
 
 import { motion, type Variants } from "framer-motion";
 import type { ReactNode } from "react";
+import { DUR, EASE_OUT } from "./tokens";
 
-export const EASE_OUT = [0.22, 1, 0.36, 1] as const;
+export { DUR, EASE_OUT, EASE_IN, EASE_IN_OUT, SPRING } from "./tokens";
 
 export const fadeUp: Variants = {
-  hidden: { opacity: 0, y: 12, scale: 0.98 },
-  show: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.45, ease: EASE_OUT } },
+  hidden: { opacity: 0, y: 16, scale: 0.99 },
+  show: { opacity: 1, y: 0, scale: 1, transition: { duration: DUR.entrance, ease: EASE_OUT } },
 };
 
 export const fadeIn: Variants = {
   hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { duration: 0.4, ease: EASE_OUT } },
+  show: { opacity: 1, transition: { duration: DUR.base, ease: EASE_OUT } },
 };
 
-export function containerVariants(stagger = 0.06, delay = 0): Variants {
+export function containerVariants(stagger: number = DUR.stagger, delay: number = DUR.leadIn): Variants {
   return { hidden: {}, show: { transition: { staggerChildren: stagger, delayChildren: delay } } };
 }
 
 export function Stagger({
   children,
   className,
-  stagger = 0.06,
-  delay = 0,
+  stagger = DUR.stagger,
+  delay = DUR.leadIn,
   inView = false,
 }: {
   children: ReactNode;
@@ -46,7 +47,7 @@ export function Stagger({
 
 export function StaggerItem({ children, className, variants = fadeUp }: { children: ReactNode; className?: string; variants?: Variants }) {
   return (
-    <motion.div className={className} variants={variants}>
+    <motion.div className={`motion-reveal ${className ?? ""}`} variants={variants}>
       {children}
     </motion.div>
   );
@@ -55,11 +56,11 @@ export function StaggerItem({ children, className, variants = fadeUp }: { childr
 export function Reveal({ children, className, delay = 0, y = 14 }: { children: ReactNode; className?: string; delay?: number; y?: number }) {
   return (
     <motion.div
-      className={className}
+      className={`motion-reveal ${className ?? ""}`}
       initial={{ opacity: 0, y }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "0px 0px -10% 0px" }}
-      transition={{ duration: 0.55, ease: EASE_OUT, delay }}
+      transition={{ duration: DUR.entrance, ease: EASE_OUT, delay }}
     >
       {children}
     </motion.div>

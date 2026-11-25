@@ -1,7 +1,7 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
-import { EASE_OUT } from "./stagger";
+import { motion } from "framer-motion";
+import { DUR, EASE_IN_OUT, EASE_OUT } from "./tokens";
 
 const TONE: Record<string, string> = {
   accent: "var(--accent)",
@@ -20,6 +20,7 @@ export function ProgressBar({
   delay = 0,
   marker,
   trackClassName = "",
+  trackColor,
 }: {
   value: number;
   height?: number;
@@ -28,30 +29,31 @@ export function ProgressBar({
   delay?: number;
   marker?: number;
   trackClassName?: string;
+  trackColor?: string;
 }) {
   const pct = Math.max(0, Math.min(1, value)) * 100;
   return (
     <div
       className={`relative w-full overflow-hidden pill bg-card3 ${trackClassName} ${className}`}
-      style={{ height }}
+      style={{ height, background: trackColor }}
       role="progressbar"
       aria-valuenow={Math.round(pct)}
       aria-valuemin={0}
       aria-valuemax={100}
     >
       <motion.div
-        className="h-full pill"
+        className="h-full w-full pill origin-left"
         style={{ background: TONE[tone] }}
-        initial={{ width: 0 }}
-        animate={{ width: `${pct}%` }}
-        transition={{ duration: 0.75, ease: EASE_OUT, delay }}
+        initial={{ scaleX: 0 }}
+        animate={{ scaleX: pct / 100 }}
+        transition={{ duration: DUR.modal, ease: EASE_IN_OUT, delay: DUR.leadIn + delay }}
       />
       {marker !== undefined && (
         <motion.div
           className="absolute top-0 h-full w-[2px] bg-ink"
           initial={{ left: 0, opacity: 0 }}
           animate={{ left: `${Math.max(0, Math.min(1, marker)) * 100}%`, opacity: 1 }}
-          transition={{ duration: 0.75, ease: EASE_OUT, delay: delay + 0.2 }}
+          transition={{ duration: DUR.modal, ease: EASE_IN_OUT, delay: DUR.leadIn + delay + DUR.fast }}
         />
       )}
     </div>
@@ -75,7 +77,6 @@ export function CircularProgress({
   delay?: number;
   trackColor?: string;
 }) {
-  const reduce = useReducedMotion();
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
   const v = Math.max(0, Math.min(1, value));
@@ -94,7 +95,7 @@ export function CircularProgress({
           strokeDasharray={c}
           initial={{ strokeDashoffset: c }}
           animate={{ strokeDashoffset: c * (1 - v) }}
-          transition={{ duration: reduce ? 0 : 0.9, ease: EASE_OUT, delay }}
+          transition={{ duration: DUR.rare, ease: EASE_OUT, delay: DUR.leadIn + delay }}
         />
       </svg>
       <div className="absolute inset-0 grid place-items-center">{children}</div>

@@ -76,7 +76,7 @@ export function TransactionsView({ currency: c, accounts, initial, initialQuery,
       </div>
 
       <div className="grid gap-5 lg:grid-cols-4">
-        <div className="lg:col-span-3">
+        <div className="min-w-0 lg:col-span-3">
           {filtered.length === 0 ? (
             <EmptyState icon="ArrowLeftRight" title={rows.length === 0 ? "No transactions yet" : "Nothing matches these filters"} description={rows.length === 0 ? "Add or import transactions to unlock deeper analytics." : "Try widening the date range or clearing the category."} action={rows.length === 0 ? <Button href="/transactions/import">Import transactions</Button> : <Button variant="secondary" onClick={() => { setQ(""); setType("all"); setCategory(""); setAccountId(null); setRange("all"); }}>Clear filters</Button>} />
           ) : (

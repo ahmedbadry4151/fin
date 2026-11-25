@@ -1,10 +1,10 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Check, ArrowUpRight, Sparkles, FileText, GitCompare, Trash2 } from "lucide-react";
+import { Play, ArrowUpRight, Sparkles, FileText, GitCompare, Trash2 } from "lucide-react";
 import { Card, CardTitle, PageHeader, KeyValue, MetricCard } from "../ui/card";
 import { Button } from "../ui/button";
 import { SegmentedControl, StatusBadge, PillTabs, Chip } from "../ui/pill";
@@ -15,37 +15,26 @@ import { FanChart } from "../charts/fan-chart";
 import { Histogram, HBars } from "../charts/charts";
 import { ProgressBar, CircularProgress } from "../motion/progress";
 import { useCountUp } from "../motion/count-up";
-import { Stagger, StaggerItem, EASE_OUT } from "../motion/stagger";
+import { Stagger, StaggerItem } from "../motion/stagger";
+import { DUR, EASE_IN, EASE_IN_OUT, EASE_OUT, SPRING, STEP } from "../motion/tokens";
 import { useToast } from "../motion/toast";
 import { formatMoney, formatMonths, formatPct, relativeTime } from "@/lib/format";
 import { describeParams } from "@/lib/scenarios";
 import { runSimulation, type EconAssumptions, type ScenarioParams, type SimResults, type SimTwin } from "@/lib/simulation";
 
 /* ---------------- Configuration + progress ---------------- */
-const STAGES = ["Preparing model", "Generating possible paths", "Running futures", "Calculating percentiles", "Analyzing risk", "Preparing results"];
-
 export function SimulationConfigView({ currency: c, scenario, goals, econ, defaults, metrics }: { currency: string; scenario: { id: number; name: string; description: string; params: ScenarioParams } | null; goals: { id: number; name: string; targetAmount: number }[]; econ: EconAssumptions; defaults: { paths: number; horizon: number; goalId: number | null }; metrics: { income: number; expenses: number; netWorth: number; savings: number } }) {
   const router = useRouter();
   const [paths, setPaths] = useState(defaults.paths);
   const [horizon, setHorizon] = useState(defaults.horizon);
   const [goalId, setGoalId] = useState<number | null>(defaults.goalId ?? goals[0]?.id ?? null);
   const [running, setRunning] = useState(false);
-  const [stage, setStage] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  const progress = useCountUp(running ? 100 : 0, { duration: 4200 });
-  const pathCount = useCountUp(running ? paths : 0, { duration: 4200, delay: 600 });
-
-  useEffect(() => {
-    if (!running) return;
-    const timers = STAGES.map((_, i) => setTimeout(() => setStage(i), i * 700));
-    return () => timers.forEach(clearTimeout);
-  }, [running]);
 
   async function run() {
+    if (running) return;
     setRunning(true);
     setError(null);
-    setStage(0);
-    const started = Date.now();
     try {
       const r = await fetch("/api/simulations", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scenarioId: scenario?.id ?? null, goalId, paths, horizonYears: horizon }) });
       if (!r.ok) {
@@ -56,8 +45,7 @@ export function SimulationConfigView({ currency: c, scenario, goals, econ, defau
         throw new Error(detail || `request failed (${r.status})`);
       }
       const d = await r.json();
-      const wait = Math.max(0, 4400 - (Date.now() - started));
-      setTimeout(() => router.push(`/simulations/${d.id}`), wait);
+      router.push(`/simulations/${d.id}`);
     } catch (e) {
       setRunning(false);
       setError(e instanceof Error && e.message ? `We couldn't complete this simulation. ${e.message}` : "We couldn't complete this simulation.");
@@ -69,18 +57,16 @@ export function SimulationConfigView({ currency: c, scenario, goals, econ, defau
   if (running) {
     return (
       <div className="mx-auto grid min-h-[70vh] max-w-xl place-items-center">
-        <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} className="w-full text-center">
-          <CircularProgress value={progress / 100} size={160} stroke={8}><div><div className="text-[34px] font-extrabold tracking-tight tnum">{Math.round(progress)}</div><div className="label-sm">percent</div></div></CircularProgress>
+        <motion.div initial={STEP.enter} animate={STEP.show} transition={{ duration: DUR.modal, ease: EASE_OUT }} className="w-full text-center" role="status" aria-live="polite">
+          <motion.span
+            className="mx-auto grid h-16 w-16 place-items-center rounded-full border-[3px] border-accent border-t-transparent"
+            animate={{ rotate: 360 }}
+            transition={{ repeat: Infinity, duration: 0.9, ease: "linear" }}
+            aria-label="Simulation in progress"
+          />
           <h1 className="mt-6 text-[26px] font-extrabold tracking-tight">Simulating {scenario ? `“${scenario.name}”` : "your current plan"}</h1>
-          <div className="mt-1 text-[14px] text-muted tnum">{Math.round(pathCount).toLocaleString()} of {paths.toLocaleString()} futures · {horizon}-year horizon</div>
-          <ol className="mx-auto mt-8 max-w-sm space-y-2 text-left">
-            {STAGES.map((s, i) => (
-              <motion.li key={s} initial={{ opacity: 0.3 }} animate={{ opacity: i <= stage ? 1 : 0.3 }} className="flex items-center gap-3 text-[13.5px] font-semibold">
-                <span className={`grid h-6 w-6 place-items-center pill ${i < stage ? "bg-ink text-accent" : i === stage ? "bg-accent text-accent-ink" : "bg-card3 text-subtle"}`}>{i < stage ? <Check className="h-3.5 w-3.5" strokeWidth={3} /> : <span className="text-[10px] tnum">{i + 1}</span>}</span>
-                {s === "Running futures" ? `Running ${paths.toLocaleString()} futures` : s}
-              </motion.li>
-            ))}
-          </ol>
+          <div className="mt-1 text-[14px] text-muted tnum">Running {paths.toLocaleString()} futures · {horizon}-year horizon</div>
+          <p className="mt-3 text-[12.5px] text-muted">Results appear when the simulation completes.</p>
         </motion.div>
       </div>
     );
@@ -145,16 +131,16 @@ export function SimulationResultsView({ currency: c, sim, results: r, scenario, 
       <PillTabs items={tabs} current={current} layoutId="sim-tabs" className="mb-5" />
 
       <AnimatePresence mode="wait">
-        <motion.div key={tab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.28, ease: EASE_OUT }}>
+        <motion.div key={tab} initial={STEP.enter} animate={STEP.show} exit={{ ...STEP.exit, transition: { duration: DUR.exit, ease: EASE_IN } }} transition={{ duration: DUR.modal, ease: EASE_OUT }}>
           {tab === "overview" && (
-            <Stagger stagger={0.08} className="space-y-5">
+            <Stagger className="space-y-5">
               <StaggerItem>
                 <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
                   <MetricCard dark label="Expected Net Worth" value={r.final.p50} format={(n) => formatMoney(n, c, { compact: true })} hint="Median of simulated final net worth." delta={delta !== null ? <span className={delta >= 0 ? "text-accent" : "text-warn"}>{formatMoney(delta, c, { compact: true, sign: true })} vs current plan</span> : <span className="text-accent">Mean {formatMoney(r.final.mean, c, { compact: true })}</span>} />
-                  <MetricCard label="Goal Probability" value={(r.goal?.probability ?? 0) * 100} format={(n) => (r.goal ? `${Math.round(n)}%` : "—")} delay={0.1} delta={r.goal ? `${r.goal.name} · was ${bl?.goalProbability != null ? Math.round(bl.goalProbability * 100) + "%" : "—"}` : "No goal tracked"} deltaTone={r.goal && bl?.goalProbability != null ? (r.goal.probability >= bl.goalProbability ? "good" : "warn") : "neutral"} />
+                  <MetricCard label="Goal Probability" value={(r.goal?.probability ?? 0) * 100} format={(n) => (r.goal ? `${Math.round(n)}%` : "—")} delta={r.goal ? `${r.goal.name} · was ${bl?.goalProbability != null ? Math.round(bl.goalProbability * 100) + "%" : "—"}` : "No goal tracked"} deltaTone={r.goal && bl?.goalProbability != null ? (r.goal.probability >= bl.goalProbability ? "good" : "warn") : "neutral"} />
                   <MetricCard label="Emergency Fund Survival" display={formatMonths(r.risk.emergencySurvivalMonths)} delta="essential expenses, no income" />
-                  <MetricCard label="Cash Shortfall" value={r.risk.shortfallProbability * 100} format={(n) => `${Math.round(n)}%`} delay={0.2} deltaTone={r.risk.shortfallProbability > 0.15 ? "warn" : "good"} delta={r.risk.medianShortfall > 0 ? `median ${formatMoney(r.risk.medianShortfall, c, { compact: true })}` : "of paths run dry"} />
-                  <MetricCard label="Monthly Cash Flow" value={r.cashFlow.month12Median} format={(n) => formatMoney(n, c, { sign: true })} delay={0.3} delta={`year 1 · ${formatMoney(r.cashFlow.month12P10, c, { compact: true })} to ${formatMoney(r.cashFlow.month12P90, c, { compact: true })}`} />
+                  <MetricCard label="Cash Shortfall" value={r.risk.shortfallProbability * 100} format={(n) => `${Math.round(n)}%`} deltaTone={r.risk.shortfallProbability > 0.15 ? "warn" : "good"} delta={r.risk.medianShortfall > 0 ? `median ${formatMoney(r.risk.medianShortfall, c, { compact: true })}` : "of paths run dry"} />
+                  <MetricCard label="Monthly Cash Flow" value={r.cashFlow.month12Median} format={(n) => formatMoney(n, c, { sign: true })} delta={`year 1 · ${formatMoney(r.cashFlow.month12P10, c, { compact: true })} to ${formatMoney(r.cashFlow.month12P90, c, { compact: true })}`} />
                 </div>
               </StaggerItem>
               <StaggerItem>
@@ -269,8 +255,8 @@ function SensitivityExplorer({ r, c, simTwin, params }: { r: SimResults; c: stri
               <div key={s.key}>
                 <div className="mb-1 flex items-center justify-between text-[12.5px]"><span className="font-semibold">{s.label} <span className="text-muted">{s.shift}</span></span><span className="tnum font-bold">{formatMoney(s.impact, c, { compact: true })}</span></div>
                 <div className="relative h-7 w-full rounded-xl bg-card2">
-                  <motion.div className={`absolute left-1/2 top-0 h-full rounded-r-xl ${i === 0 ? "bg-accent" : "bg-ink/70"}`} initial={{ width: 0 }} animate={{ width: `${(Math.max(0, s.high - s.base) / max) * 50}%` }} transition={{ duration: 0.7, ease: EASE_OUT, delay: i * 0.05 }} />
-                  <motion.div className={`absolute right-1/2 top-0 h-full rounded-l-xl ${i === 0 ? "bg-accent/60" : "bg-subtle/60"}`} initial={{ width: 0 }} animate={{ width: `${(Math.max(0, s.base - s.low) / max) * 50}%` }} transition={{ duration: 0.7, ease: EASE_OUT, delay: i * 0.05 }} />
+                  <motion.div className={`absolute left-1/2 top-0 h-full w-1/2 origin-left rounded-r-xl ${i === 0 ? "bg-accent" : "bg-ink/70"}`} initial={{ scaleX: 0 }} animate={{ scaleX: Math.max(0, s.high - s.base) / max }} transition={{ duration: DUR.modal, ease: EASE_IN_OUT, delay: i * 0.04 }} />
+                  <motion.div className={`absolute right-1/2 top-0 h-full w-1/2 origin-right rounded-l-xl ${i === 0 ? "bg-accent/60" : "bg-subtle/60"}`} initial={{ scaleX: 0 }} animate={{ scaleX: Math.max(0, s.base - s.low) / max }} transition={{ duration: DUR.modal, ease: EASE_IN_OUT, delay: i * 0.04 }} />
                   <span className="absolute left-1/2 top-0 h-full w-px bg-ink" />
                   <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10.5px] tnum text-muted">{formatMoney(s.low, "", { compact: true })}</span>
                   <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10.5px] tnum text-muted">{formatMoney(s.high, "", { compact: true })}</span>
@@ -323,7 +309,7 @@ export function SimulationHistoryView({ currency: c, sims }: { currency: string;
           <div className="hidden grid-cols-[1fr_120px_120px_120px_110px_40px] gap-3 px-4 py-2 md:grid"><span className="label">Scenario</span><span className="label text-right">Median NW</span><span className="label text-right">Goal</span><span className="label text-right">Shortfall</span><span className="label">Risk</span><span /></div>
           <ul className="divide-y divide-line">
             {sims.map((s, i) => (
-              <motion.li key={s.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(i, 12) * 0.04, duration: 0.35 }}>
+              <motion.li key={s.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(i, 5) * 0.04, duration: DUR.page, ease: EASE_OUT }}>
                 <button onClick={() => setSelected(s)} className="grid w-full grid-cols-[1fr_auto] items-center gap-3 rounded-2xl px-4 py-3 text-left transition-colors hover:bg-card2 md:grid-cols-[1fr_120px_120px_120px_110px_40px]">
                   <span className="flex items-center gap-3 min-w-0"><span className="grid h-9 w-9 shrink-0 place-items-center pill bg-card3"><Icon name="Activity" className="h-4 w-4" /></span><span className="min-w-0"><span className="block truncate text-[13.5px] font-bold">{s.name}</span><span className="block text-[11.5px] text-muted">{s.paths.toLocaleString()} paths · {s.horizonYears}y · {relativeTime(s.createdAt)}</span></span></span>
                   <span className="text-right text-[13px] font-bold tnum">{s.finalP50 !== null ? formatMoney(s.finalP50, c, { compact: true }) : "—"}</span>
@@ -378,7 +364,7 @@ export function CompareView({ currency: c, sims }: { currency: string; sims: Sim
             <div />
             {chosen.map((s) => (
               <motion.button layout key={s.id} onClick={() => setFocus(s.id)} className={`relative rounded-[20px] p-4 text-left transition-colors ${focus === s.id ? "bg-ink text-ink-fg shadow-panel" : "card hover:bg-card2"}`}>
-                {focus === s.id && <motion.span layoutId="compare-focus" className="absolute -top-2 left-4 pill bg-accent px-2 py-0.5 text-[10px] font-bold text-accent-ink" transition={{ type: "spring", stiffness: 400, damping: 32 }}>Selected</motion.span>}
+                {focus === s.id && <motion.span layoutId="compare-focus" className="absolute -top-2 left-4 pill bg-accent px-2 py-0.5 text-[10px] font-bold text-accent-ink" transition={SPRING.pill}>Selected</motion.span>}
                 <div className="text-[14px] font-bold leading-tight">{s.name}</div>
                 <div className={`text-[11px] ${focus === s.id ? "text-ink-fg/60" : "text-muted"}`}>{relativeTime(s.createdAt)}</div>
               </motion.button>

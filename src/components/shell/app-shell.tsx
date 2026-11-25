@@ -8,7 +8,8 @@ import { Bell, Search, Moon, Sun, LayoutGrid, Fingerprint, GitBranch, Target, Sp
 import { Icon, Avatar } from "../ui/states";
 import { useTheme, CurrencyProvider } from "../providers";
 import { CommandPalette } from "./command-palette";
-import { EASE_OUT } from "../motion/stagger";
+import { DUR, EASE_IN, EASE_OUT, SPRING } from "../motion/tokens";
+import { useDialogBehavior } from "../ui/overlay";
 
 export type ShellUser = { id: number; name: string; email: string; currency: string };
 
@@ -79,6 +80,9 @@ export function AppShell({ user, unread, children }: { user: ShellUser; unread: 
   const { theme, toggle } = useTheme();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  const enter = { duration: DUR.modal, ease: EASE_OUT };
+  const exit = { duration: DUR.exit, ease: EASE_IN };
+  const mobileNavRef = useDialogBehavior(moreOpen, () => setMoreOpen(false));
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -155,7 +159,7 @@ export function AppShell({ user, unread, children }: { user: ShellUser; unread: 
           <Link href="/notifications" className="relative grid h-9 w-9 place-items-center pill text-muted hover:text-ink hover:bg-card2 focus-ring" aria-label={`Notifications${unread ? `, ${unread} unread` : ""}`}>
             <Bell className="h-4 w-4" />
             {unread > 0 && (
-              <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 500, damping: 20 }} className="absolute right-1 top-1 grid h-4 min-w-4 place-items-center pill bg-accent px-1 text-[9.5px] font-bold text-accent-ink tnum">
+              <motion.span initial={{ scale: 0.8 }} animate={{ scale: 1 }} transition={SPRING.badge} className="absolute right-1 top-1 grid h-4 min-w-4 place-items-center pill bg-accent px-1 text-[9.5px] font-bold text-accent-ink tnum">
                 {unread}
               </motion.span>
             )}
@@ -195,11 +199,11 @@ export function AppShell({ user, unread, children }: { user: ShellUser; unread: 
           </ul>
         </nav>
 
-        <AnimatePresence>
+        <AnimatePresence initial={false}>
           {moreOpen && (
-            <div className="fixed inset-0 z-[80] lg:hidden" role="dialog" aria-modal="true">
-              <motion.div className="absolute inset-0 bg-ink-deep/40" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setMoreOpen(false)} />
-              <motion.div className="absolute inset-x-0 bottom-0 rounded-t-[26px] bg-card p-5 pb-8 shadow-panel" initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 60, opacity: 0 }} transition={{ duration: 0.3, ease: EASE_OUT }}>
+            <div ref={mobileNavRef} tabIndex={-1} className="fixed inset-0 z-[80] lg:hidden" role="dialog" aria-modal="true">
+              <motion.div className="absolute inset-0 bg-ink-deep/40" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: exit }} transition={enter} onClick={() => setMoreOpen(false)} />
+              <motion.div className="absolute inset-x-0 bottom-0 rounded-t-[26px] bg-card p-5 pb-8 shadow-panel" initial={{ y: 32, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 16, opacity: 0, transition: exit }} transition={enter}>
                 <div className="mb-3 flex items-center justify-between">
                   <span className="text-[15px] font-bold">More</span>
                   <button onClick={() => setMoreOpen(false)} className="grid h-8 w-8 place-items-center pill bg-card2" aria-label="Close">

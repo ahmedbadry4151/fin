@@ -64,8 +64,9 @@ export function Providers({ children }: { children: ReactNode }) {
   const setTheme = useCallback((t: Theme) => {
     setThemeState(t);
     document.documentElement.classList.toggle("dark", t === "dark");
+    applyAccent(yellowColor, t === "dark");
     window.localStorage.setItem("ft-theme", t);
-  }, []);
+  }, [yellowColor]);
 
   const setYellowColor = useCallback((c: string) => {
     setYellowColorState(c);

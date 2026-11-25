@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Search, CornerDownLeft } from "lucide-react";
 import { Icon } from "../ui/states";
 import { useTheme } from "../providers";
-import { EASE_OUT } from "../motion/stagger";
+import { DUR, EASE_IN, EASE_OUT } from "../motion/tokens";
 
 type Item = { id: string; label: string; hint?: string; icon: string; group: string; href?: string; run?: () => void };
 
@@ -27,6 +27,8 @@ const COMMANDS: Omit<Item, "group">[] = [
 export function CommandPalette({ open, onClose }: { open: boolean; onClose: () => void }) {
   const router = useRouter();
   const { toggle } = useTheme();
+  const enter = { duration: DUR.popover, ease: EASE_OUT };
+  const exit = { duration: DUR.exit, ease: EASE_IN };
   const [q, setQ] = useState("");
   const [results, setResults] = useState<Item[]>([]);
   const [active, setActive] = useState(0);
@@ -101,11 +103,11 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
 
   let flat = -1;
   return (
-    <AnimatePresence>
+    <AnimatePresence initial={false}>
       {open && (
         <div className="fixed inset-0 z-[96] flex items-start justify-center p-4 pt-[12vh]" role="dialog" aria-modal="true" aria-label="Command palette">
-          <motion.div className="absolute inset-0 bg-ink-deep/40 backdrop-blur-[3px]" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} />
-          <motion.div className="relative w-full max-w-xl overflow-hidden rounded-[24px] bg-card shadow-panel" initial={{ opacity: 0, scale: 0.97, y: -8 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.98, y: -4 }} transition={{ duration: 0.24, ease: EASE_OUT }}>
+          <motion.div className="absolute inset-0 bg-ink-deep/40 backdrop-blur-[3px]" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: exit }} transition={enter} onClick={onClose} />
+          <motion.div className="relative w-full max-w-xl overflow-hidden rounded-[24px] bg-card shadow-panel" initial={{ opacity: 0, scale: 0.97, y: -6 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.98, y: -3, transition: exit }} transition={enter}>
             <div className="flex items-center gap-3 border-b border-line px-5 py-4">
               <Search className="h-4 w-4 text-muted" />
               <input ref={inputRef} value={q} onChange={(e) => { setQ(e.target.value); setActive(0); }} placeholder="Search accounts, goals, scenarios, simulations… or run a command" className="flex-1 bg-transparent text-[14px] outline-none placeholder:text-subtle" />
@@ -114,7 +116,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
             <div className="max-h-[50vh] overflow-y-auto p-2">
               {groups.length === 0 && <div className="px-4 py-8 text-center text-[13px] text-muted">No matches yet.</div>}
               {groups.map(([group, list]) => (
-                <motion.div key={group} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
+                <motion.div key={group} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: DUR.fast, ease: EASE_OUT }}>
                   <div className="label px-3 pb-1 pt-3">{group}</div>
                   {list.map((it) => {
                     flat++;

@@ -32,7 +32,7 @@ export function GoalsView({ currency: c, goals, probabilities }: { currency: str
       {goals.length === 0 ? (
         <EmptyState icon="Target" title="Give your future something to measure" description="Add a goal to see required savings, probability under your current plan, and how scenarios change it." action={<Button href="/goals/new">Add your first goal</Button>} />
       ) : (
-        <Stagger stagger={0.06} className="space-y-5">
+        <Stagger className="space-y-5">
           <StaggerItem>
             <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
               <MetricCard dark label="Active Goals" value={active.length} format={(n) => String(Math.round(n))} delta={<span className="text-accent">{goals.length - active.length} completed or paused</span>} />
@@ -135,7 +135,7 @@ export function GoalDetailView({ currency: c, goal, econ, baseline, impacts }: {
         actions={<><Button variant="secondary" onClick={() => setEditing((e) => !e)}>{editing ? "Close editor" : "Edit"}</Button><Button variant="secondary" href={`/goals/${goal.id}/planner`} icon={<SlidersHorizontal className="h-4 w-4" />}>Planner</Button><Button variant="accent" href={`/simulations/new?goal=${goal.id}`} icon={<Play className="h-4 w-4" />}>Simulate Goal</Button></>}
       />
       {editing && <div className="mb-5"><GoalForm currency={c} initial={goal} onDone={() => setEditing(false)} /><div className="mt-2 flex justify-end"><Button variant="danger" size="sm" icon={<Trash2 className="h-4 w-4" />} onClick={() => setConfirm(true)}>Delete goal</Button></div></div>}
-      <Stagger stagger={0.06} className="space-y-5">
+      <Stagger className="space-y-5">
         <StaggerItem>
           <div className="grid gap-5 lg:grid-cols-3">
             <Card dark className="lg:col-span-1">

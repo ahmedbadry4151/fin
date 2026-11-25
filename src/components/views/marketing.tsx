@@ -10,7 +10,8 @@ import { AccentChip, StatusBadge, Chip } from "../ui/pill";
 import { Icon } from "../ui/states";
 import { AnimatedNumber, useCountUp } from "../motion/count-up";
 import { ProgressBar } from "../motion/progress";
-import { Reveal, Stagger, StaggerItem, EASE_OUT } from "../motion/stagger";
+import { Reveal, Stagger, StaggerItem } from "../motion/stagger";
+import { DUR, EASE_IN, EASE_IN_OUT, EASE_OUT } from "../motion/tokens";
 import { Collapse, KenBurns } from "../motion/primitives";
 import { FanChart } from "../charts/fan-chart";
 import { HBars } from "../charts/charts";
@@ -33,6 +34,16 @@ const DEMO_SAVE_MORE = runSimulation(DEMO_TWIN, DEMO_ECON, { savingsChangePct: 1
 const DEMO_EXTRA_SAVINGS = Math.round(
   0.15 * Math.max(computeMetrics(DEMO_TWIN_INPUT).savings, DEMO_TWIN_INPUT.monthlyIncome * 0.1)
 );
+
+/* One compact money format for the hero KPI row so every value keeps the EGP
+   prefix, the same precision and a fixed-width footprint during count-ups. */
+function formatKpiMoney(value: number, { sign = false }: { sign?: boolean } = {}) {
+  const n = Number.isFinite(value) ? value : 0;
+  const prefix = n < 0 ? "−" : sign && n > 0 ? "+" : "";
+  const abs = Math.abs(n);
+  const body = abs >= 1000 ? `${(abs / 1000).toFixed(1).replace(/\.0$/, "")}k` : `${Math.round(abs)}`;
+  return `${prefix}EGP ${body}`;
+}
 
 const AI_DEMO = {
   extra: formatMoney(DEMO_EXTRA_SAVINGS, "EGP"),
@@ -98,27 +109,27 @@ export function HeroSimulation({ autoplay = true }: { autoplay?: boolean }) {
   const active = phase === 2 ? scenario : baseline;
   const nw = useCountUp(428500, { duration: 1600, delay: 300 });
   return (
-    <motion.div initial={{ opacity: 0, scale: 0.96, y: 16 }} animate={{ opacity: 1, scale: 1, y: 0 }} transition={{ duration: 0.7, ease: EASE_OUT, delay: 0.5 }} className="card relative overflow-hidden p-5 md:p-6">
+    <motion.div initial={{ opacity: 0, scale: 0.96, y: 16 }} animate={{ opacity: 1, scale: 1, y: 0 }} transition={{ duration: DUR.rare, ease: EASE_OUT, delay: 0.5 }} className="twin-card relative overflow-hidden p-5 md:p-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2"><span className="h-2 w-2 pill bg-good" /><span className="label">Financial Twin · live</span></div>
         <AnimatePresence mode="wait">
-          {phase === 2 ? <motion.div key="s" initial={{ opacity: 0, y: -6, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -6 }}><AccentChip>Scenario: Save 15% More</AccentChip></motion.div> : <motion.div key="b" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><Chip>Current plan</Chip></motion.div>}
+          {phase === 2 ? <motion.div key="s" initial={{ opacity: 0, y: -6, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -4, transition: { duration: DUR.exit, ease: EASE_IN } }}><AccentChip>Scenario: Save 15% More</AccentChip></motion.div> : <motion.div key="b" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: { duration: DUR.exit, ease: EASE_IN } }}><Chip>Current plan</Chip></motion.div>}
         </AnimatePresence>
       </div>
-      <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
-        <div className="card-dark p-3.5 md:col-span-1"><div className="label text-ink-fg/55">Net worth</div><div className="mt-1 text-[22px] font-extrabold tracking-tight tnum">{formatMoney(nw, "EGP")}</div></div>
-        <div className="card-compact p-3.5"><div className="label">Cash flow</div><div className="mt-1 text-[18px] font-extrabold tnum"><AnimatedNumber value={phase === 2 ? 12190 : 10600} format={(n) => formatMoney(n, "EGP", { sign: true })} delay={600} once={false} /></div></div>
-        <div className="card-compact p-3.5"><div className="label">Savings</div><div className="mt-1 text-[18px] font-extrabold tnum"><AnimatedNumber value={263200} format={(n) => formatMoney(n, "", { compact: true })} delay={800} /></div></div>
-        <div className="card-compact p-3.5"><div className="label">Buy a Home</div><div className="mt-1 flex items-baseline gap-1 text-[18px] font-extrabold tnum"><AnimatedNumber value={(active.goal?.probability ?? 0) * 100} format={(n) => `${Math.round(n)}%`} delay={1000} once={false} /><span className="text-[10.5px] font-semibold text-muted">probability</span></div><ProgressBar value={126000 / 1500000} height={4} className="mt-2" delay={1.1} /></div>
+      <div className="twin-kpi-strip mt-4">
+        <div className="twin-kpi is-active"><div className="twin-kpi-label">Net worth</div><div className="twin-kpi-value">{formatKpiMoney(nw)}</div></div>
+        <div className="twin-kpi"><div className="twin-kpi-label">Cash flow</div><div className="twin-kpi-value"><AnimatedNumber value={phase === 2 ? 12190 : 10600} format={(n) => formatKpiMoney(n, { sign: true })} delay={600} once={false} /></div></div>
+        <div className="twin-kpi"><div className="twin-kpi-label">Savings</div><div className="twin-kpi-value"><AnimatedNumber value={263200} format={(n) => formatKpiMoney(n)} delay={800} /></div></div>
+        <div className="twin-kpi"><div className="twin-kpi-label">Buy a Home</div><div className="twin-kpi-value"><AnimatedNumber value={(active.goal?.probability ?? 0) * 100} format={(n) => `${Math.round(n)}%`} delay={1000} once={false} /></div><div className="micro-copy mt-0.5">probability</div><ProgressBar value={126000 / 1500000} height={3} tone="accent" trackColor="var(--twin-track)" className="mt-2" delay={1.1} /></div>
       </div>
-      <div className="mt-4">
-        <div className="mb-1 flex items-center justify-between text-[11.5px]"><span className="font-semibold">10-year projection</span><span className="text-muted tnum">Median {formatMoney(active.final.p50, "EGP", { compact: true })} · 5th–95th {formatMoney(active.final.p5, "", { compact: true })}–{formatMoney(active.final.p95, "", { compact: true })}</span></div>
+      <div className="twin-section-divider">
+        <div className="mb-1 flex items-center justify-between text-[12px] leading-[1.4]"><span className="font-semibold">10-year projection</span><span className="micro-copy tnum">Median {formatMoney(active.final.p50, "EGP", { compact: true })} · 5th–95th {formatMoney(active.final.p5, "", { compact: true })}–{formatMoney(active.final.p95, "", { compact: true })}</span></div>
         <AnimatePresence mode="wait">
-          {phase >= 1 && <motion.div key={phase} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}><FanChart series={active.series} baseline={phase === 2 ? baseline.series.p50 : null} currency="EGP" height={190} compact showLegend={false} /></motion.div>}
-          {phase === 0 && <motion.div key="empty" className="hatch h-[190px] rounded-2xl border border-line" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} />}
+          {phase >= 1 && <motion.div key={phase} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: { duration: DUR.exit, ease: EASE_IN } }} transition={{ duration: DUR.modal }}><FanChart series={active.series} baseline={phase === 2 ? baseline.series.p50 : null} currency="EGP" height={190} compact showLegend={false} /></motion.div>}
+          {phase === 0 && <motion.div key="empty" className="hatch h-[190px] rounded-2xl border border-line" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: { duration: DUR.exit, ease: EASE_IN } }} />}
         </AnimatePresence>
       </div>
-      <div className="mt-3 flex items-center justify-between text-[11px] text-subtle"><span>{baseline.paths.toLocaleString()} simulated paths · hatched = uncertainty range</span><span className="inline-flex gap-1">{[0, 1, 2].map((i) => <span key={i} className={`h-1.5 w-1.5 pill ${phase === i ? "bg-accent" : "bg-card3"}`} />)}</span></div>
+      <div className="micro-copy mt-3 flex items-center justify-between"><span>{baseline.paths.toLocaleString()} simulated paths · hatched = uncertainty range</span><span className="inline-flex gap-1">{[0, 1, 2].map((i) => <span key={i} className={`twin-dot h-1.5 w-1.5 pill ${phase === i ? "is-active" : ""}`} />)}</span></div>
     </motion.div>
   );
 }
@@ -134,14 +145,14 @@ export function Landing() {
         <div className="glow pointer-events-none absolute inset-0" />
         <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-5 pb-20 pt-16 lg:grid-cols-2 lg:pt-24">
           <div>
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}><AccentChip>Living Financial Digital Twin & Scenario Laboratory</AccentChip></motion.div>
-            <motion.h1 initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.1, ease: EASE_OUT }} className="mt-5 text-[40px] font-extrabold tracking-tight leading-[1.02] md:text-[56px] text-balance">See Your Financial Future Before It Happens.</motion.h1>
-            <motion.p initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.25 }} className="mt-5 max-w-lg text-[15px] leading-relaxed text-muted md:text-[16px]">Build a living model of your financial life, test possible scenarios, and understand the range of futures your decisions could create.</motion.p>
-            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.38 }} className="mt-7 flex flex-wrap gap-2">
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: DUR.rare, ease: EASE_OUT }}><AccentChip>Living Financial Digital Twin & Scenario Laboratory</AccentChip></motion.div>
+            <motion.h1 initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: DUR.rare, delay: 0.1, ease: EASE_OUT }} className="mt-5 text-[40px] font-extrabold tracking-[-0.02em] leading-[1.14] md:text-[56px] text-balance">See Your Financial Future Before It Happens.</motion.h1>
+            <motion.p initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: DUR.rare, delay: 0.25, ease: EASE_OUT }} className="mt-5 max-w-lg text-[15px] leading-relaxed text-muted md:text-[16px]">Build a living model of your financial life, test possible scenarios, and understand the range of futures your decisions could create.</motion.p>
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: DUR.rare, delay: 0.38, ease: EASE_OUT }} className="mt-7 flex flex-wrap gap-2">
               <Button href="/signup" size="lg" iconRight={<ArrowRight className="h-4 w-4" />}>Build My Financial Twin</Button>
               <Button href="/login" size="lg" variant="secondary">Explore a Simulation</Button>
             </motion.div>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }} className="mt-6 flex flex-wrap gap-x-5 gap-y-1 text-[12px] text-muted">{["Monte Carlo futures", "Grounded AI explanations", "Every assumption visible"].map((t) => <span key={t} className="inline-flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-good" />{t}</span>)}</motion.div>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: DUR.rare, delay: 0.6, ease: EASE_OUT }} className="mt-6 flex flex-wrap gap-x-5 gap-y-1 text-[12px] text-muted">{["Monte Carlo futures", "Grounded AI explanations", "Every assumption visible"].map((t) => <span key={t} className="inline-flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-good" />{t}</span>)}</motion.div>
           </div>
           <HeroSimulation />
         </div>
@@ -164,7 +175,7 @@ export function Landing() {
 
       <section className="mx-auto max-w-6xl px-5 py-16">
         <Reveal><div className="flex flex-wrap items-end justify-between gap-3"><div><div className="label">Scenario gallery</div><h2 className="mt-2 text-[28px] font-extrabold tracking-tight md:text-[34px]">Test a decision before you make it.</h2></div><Button href="/showcase" variant="secondary">All scenarios</Button></div></Reveal>
-        <Stagger inView stagger={0.05} className="mt-8 grid grid-cols-2 gap-3 md:grid-cols-4">{SCENARIO_GALLERY.map((k) => { const t = SCENARIO_TEMPLATES.find((x) => x.key === k)!; return <StaggerItem key={k}><Link href={`/showcase#${k}`} className="card card-hover group block h-full p-5"><span className="grid h-10 w-10 place-items-center pill bg-card3 transition-colors group-hover:bg-ink group-hover:text-ink-fg"><Icon name={t.icon} className="h-4.5 w-4.5" /></span><div className="mt-4 text-[14.5px] font-bold">{t.name}</div><div className="mt-1 text-[11.5px] text-muted line-clamp-2">{t.description}</div></Link></StaggerItem>; })}</Stagger>
+        <Stagger inView className="mt-8 grid grid-cols-2 gap-3 md:grid-cols-4">{SCENARIO_GALLERY.map((k) => { const t = SCENARIO_TEMPLATES.find((x) => x.key === k)!; return <StaggerItem key={k}><Link href={`/showcase#${k}`} className="card card-hover group block h-full p-5"><span className="grid h-10 w-10 place-items-center pill bg-card3 transition-colors group-hover:bg-ink group-hover:text-ink-fg"><Icon name={t.icon} className="h-4.5 w-4.5" /></span><div className="mt-4 text-[14.5px] font-bold">{t.name}</div><div className="mt-1 text-[11.5px] text-muted line-clamp-2">{t.description}</div></Link></StaggerItem>; })}</Stagger>
       </section>
 
       <Band eyebrow="Uncertainty, visualised" title="The future is a distribution, not one line." text="Every projection shows the median, the expected value, the 25th–75th band and the hatched 5th–95th range. Amber marks the key line; hatching marks what is uncertain.">
@@ -241,25 +252,25 @@ export function DemoMode() {
     <div className="glow min-h-screen bg-page">
       <div className="mx-auto max-w-5xl px-5 py-10">
         <div className="mb-6 flex items-center justify-between"><Logo /><div className="flex items-center gap-2"><Button size="sm" variant="secondary" onClick={() => setPlaying((p) => !p)}>{playing ? "Pause" : "Play"}</Button><Button size="sm" variant="secondary" onClick={() => setElapsed(0)}>Restart</Button><Button size="sm" href="/signup">Build mine</Button></div></div>
-        <div className="h-1 w-full overflow-hidden pill bg-card3"><motion.div className="h-full bg-accent" animate={{ width: `${(elapsed / 38) * 100}%` }} transition={{ duration: 0.1, ease: "linear" }} /></div>
+        <div className="h-1 w-full overflow-hidden pill bg-card3"><motion.div className="h-full w-full origin-left bg-accent" initial={false} animate={{ scaleX: elapsed / 38 }} transition={{ duration: 0.1, ease: "linear" }} /></div>
         <div className="relative mt-6 aspect-[16/10] overflow-hidden rounded-[28px] border border-line bg-canvas shadow-float">
           <AnimatePresence mode="wait">
-            <motion.div key={scene.key} initial={{ opacity: 0, filter: "blur(6px)" }} animate={{ opacity: 1, filter: "blur(0px)" }} exit={{ opacity: 0, filter: "blur(6px)" }} transition={{ duration: 0.6 }} className="absolute inset-0 grid place-items-center p-6">
+            <motion.div key={scene.key} initial={{ opacity: 0, filter: "blur(6px)" }} animate={{ opacity: 1, filter: "blur(0px)" }} exit={{ opacity: 0, filter: "blur(6px)", transition: { duration: DUR.exit, ease: EASE_IN } }} transition={{ duration: DUR.rare }} className="absolute inset-0 grid place-items-center p-6">
               <KenBurns active={playing} scale={scene.key === "twin" || scene.key === "goal" ? 1.22 : 1.08} duration={4.5} className="w-full max-w-3xl">
                 {scene.key === "logo" && <div className="text-center"><span className="mx-auto grid h-20 w-20 place-items-center pill bg-ink"><span className="h-8 w-8 pill border-[3px] border-accent" /></span><div className="mt-4 text-[40px] font-extrabold tracking-tight">FinTwin</div></div>}
                 {scene.key === "overview" && <div className="grid grid-cols-4 gap-3"><div className="card-dark col-span-2 p-5"><div className="label text-ink-fg/55">Net worth</div><div className="mt-2 text-[34px] font-extrabold tnum"><AnimatedNumber value={428500} format={(n) => formatMoney(n, "EGP")} /></div></div>{[["Income", 32000], ["Expenses", 21400], ["Savings", 10600], ["Coverage", 4.8]].map(([k, v]) => <div key={k as string} className="card p-4"><div className="label">{k}</div><div className="mt-1 text-[20px] font-extrabold tnum"><AnimatedNumber value={v as number} format={(n) => (k === "Coverage" ? `${n.toFixed(1)} mo` : formatMoney(n, "", { compact: true }))} /></div></div>)}</div>}
-                {scene.key === "twin" && <div className="grid grid-cols-2 gap-3">{[["Income", "EGP 32,000"], ["Expenses", "EGP 21,400"], ["Assets", "EGP 478,200"], ["Liabilities", "EGP 49,700"]].map(([k, v]) => <div key={k} className="card p-5"><div className="label">{k}</div><div className="mt-1 text-[26px] font-extrabold tnum">{v}</div><div className="mt-3 h-1.5 pill bg-card3"><motion.div className="h-full pill bg-accent" initial={{ width: 0 }} animate={{ width: "70%" }} transition={{ duration: 1 }} /></div></div>)}</div>}
+                {scene.key === "twin" && <div className="grid grid-cols-2 gap-3">{[["Income", "EGP 32,000"], ["Expenses", "EGP 21,400"], ["Assets", "EGP 478,200"], ["Liabilities", "EGP 49,700"]].map(([k, v]) => <div key={k} className="card p-5"><div className="label">{k}</div><div className="mt-1 text-[26px] font-extrabold tnum">{v}</div><div className="mt-3 h-1.5 pill bg-card3"><motion.div className="h-full w-full origin-left pill bg-accent" initial={{ scaleX: 0 }} animate={{ scaleX: 0.7 }} transition={{ duration: DUR.rare, ease: EASE_IN_OUT }} /></div></div>)}</div>}
                 {scene.key === "goal" && <div className="card mx-auto max-w-md p-6"><div className="flex items-center gap-3"><span className="grid h-11 w-11 place-items-center pill bg-accent text-accent-ink"><Icon name="Home" className="h-5 w-5" /></span><div><div className="text-[18px] font-extrabold">Buy a Home</div><div className="text-[12px] text-muted">EGP 1,500,000 · 8 years</div></div><StatusBadge tone="warn" className="ml-auto">Needs attention</StatusBadge></div><div className="mt-5 text-[30px] font-extrabold tnum"><AnimatedNumber value={126000} format={(n) => formatMoney(n, "EGP")} /></div><ProgressBar value={0.084} className="mt-3" marker={1} /><div className="mt-2 text-[12px] text-muted tnum">{formatPct(DEMO_BASELINE.goal?.probability ?? 0, 0)} simulated probability under the current plan</div></div>}
                 {scene.key === "scenario" && <div className="card mx-auto max-w-md p-6"><div className="label">Scenario builder</div><div className="mt-1 text-[22px] font-extrabold">Save 15% More</div><div className="mt-4 space-y-2">{["Savings +15%", "Goal contributions +15%", "Assumptions unchanged"].map((l, i) => <motion.div key={l} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 + i * 0.3 }} className="flex items-center gap-2 rounded-xl bg-card2 px-3 py-2 text-[13px]"><span className="h-1.5 w-1.5 pill bg-accent" />{l}</motion.div>)}</div><motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.6 }} className="mt-4"><span className="pill bg-accent px-4 py-2 text-[13px] font-bold text-accent-ink">Run Simulation</span></motion.div></div>}
-                {scene.key === "simulation" && <div className="text-center"><div className="text-[64px] font-extrabold tracking-tight tnum">{Math.round(pathCount)}</div><div className="label">of 600 futures</div><div className="mx-auto mt-4 h-1.5 w-64 pill bg-card3"><motion.div className="h-full pill bg-accent" initial={{ width: 0 }} animate={{ width: "100%" }} transition={{ duration: 3.2, ease: "linear" }} /></div></div>}
+                {scene.key === "simulation" && <div className="text-center"><div className="text-[64px] font-extrabold tracking-tight tnum">{Math.round(pathCount)}</div><div className="label">of 600 futures</div><div className="mx-auto mt-4 h-1.5 w-64 pill bg-card3"><motion.div className="h-full w-full origin-left pill bg-accent" initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: 3.2, ease: "linear" }} /></div></div>}
                 {scene.key === "distribution" && <div className="card w-full p-5"><div className="mb-2 flex items-baseline justify-between"><span className="text-[14px] font-bold">Future distribution</span><span className="text-[12px] text-muted tnum">Median {formatMoney(sim.final.p50, "EGP", { compact: true })}</span></div><FanChart series={sim.series} baseline={sim.baseline?.p50 ?? null} currency="EGP" height={240} showLegend={false} /></div>}
                 {scene.key === "ai" && <div className="w-full max-w-xl"><AiDemoCard /></div>}
-                {scene.key === "report" && <div className="card mx-auto w-full max-w-md p-8"><div className="label">Scenario report</div><div className="mt-1 text-[22px] font-extrabold">Save 15% More — March</div><div className="mt-4 space-y-2">{[90, 70, 85, 50].map((w, i) => <motion.div key={i} className="h-2.5 rounded bg-card3" initial={{ width: 0 }} animate={{ width: `${w}%` }} transition={{ delay: i * 0.15, duration: 0.5 }} />)}</div><motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 1.2 }} className="mt-5 inline-flex items-center gap-2 pill bg-ink px-4 py-2 text-[12.5px] font-semibold text-ink-fg"><span className="h-1.5 w-1.5 pill bg-accent" />Your report is ready.</motion.div></div>}
+                {scene.key === "report" && <div className="card mx-auto w-full max-w-md p-8"><div className="label">Scenario report</div><div className="mt-1 text-[22px] font-extrabold">Save 15% More — March</div><div className="mt-4 space-y-2">{[90, 70, 85, 50].map((w, i) => <motion.div key={i} className="h-2.5 w-full origin-left rounded bg-card3" initial={{ scaleX: 0 }} animate={{ scaleX: w / 100 }} transition={{ delay: i * 0.04, duration: DUR.rare, ease: EASE_IN_OUT }} />)}</div><motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 1.2 }} className="mt-5 inline-flex items-center gap-2 pill bg-ink px-4 py-2 text-[12.5px] font-semibold text-ink-fg"><span className="h-1.5 w-1.5 pill bg-accent" />Your report is ready.</motion.div></div>}
                 {scene.key === "end" && <div className="text-center"><div className="text-[36px] font-extrabold tracking-tight md:text-[48px] text-balance">See your financial future before it happens.</div><Button href="/signup" size="lg" className="mt-6">Build My Financial Twin</Button></div>}
               </KenBurns>
             </motion.div>
           </AnimatePresence>
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 p-5"><AnimatePresence mode="wait"><motion.div key={scene.caption} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="inline-flex items-center gap-2 pill bg-ink px-4 py-2 text-[13px] font-semibold text-ink-fg shadow-float"><span className="h-1.5 w-1.5 pill bg-accent" />{scene.caption}</motion.div></AnimatePresence></div>
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 p-5"><AnimatePresence mode="wait"><motion.div key={scene.caption} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, transition: { duration: DUR.exit, ease: EASE_IN } }} className="inline-flex items-center gap-2 pill bg-ink px-4 py-2 text-[13px] font-semibold text-ink-fg shadow-float"><span className="h-1.5 w-1.5 pill bg-accent" />{scene.caption}</motion.div></AnimatePresence></div>
         </div>
       </div>
     </div>

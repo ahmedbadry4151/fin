@@ -2,7 +2,8 @@
 
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { EASE_OUT } from "./stagger";
+import { X } from "lucide-react";
+import { DUR, EASE_IN, EASE_OUT } from "./tokens";
 
 export type ToastInput = { title: string; description?: string; action?: { label: string; onClick: () => void }; tone?: "accent" | "good" | "warn" | "bad"; duration?: number };
 type ToastItem = ToastInput & { id: number };
@@ -34,9 +35,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               layout
               initial={{ opacity: 0, x: -20, scale: 0.98 }}
               animate={{ opacity: 1, x: 0, scale: 1 }}
-              exit={{ opacity: 0, x: -12, scale: 0.98 }}
-              transition={{ duration: 0.32, ease: EASE_OUT }}
-              className="pointer-events-auto flex items-center gap-3 pill bg-ink px-4 py-2.5 text-ink-fg shadow-float"
+              exit={{ opacity: 0, x: -12, scale: 0.98, transition: { duration: DUR.exit, ease: EASE_IN } }}
+              transition={{ duration: DUR.modal, ease: EASE_OUT }}
+              className="motion-reveal pointer-events-auto flex items-center gap-3 pill bg-ink px-4 py-2.5 text-ink-fg shadow-float"
             >
               <span className="h-2 w-2 shrink-0 pill" style={{ background: DOT[t.tone ?? "accent"] }} />
               <div className="min-w-0">
@@ -54,6 +55,14 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                   {t.action.label}
                 </button>
               )}
+              <button
+                type="button"
+                aria-label="Dismiss notification"
+                onClick={() => setItems((prev) => prev.filter((x) => x.id !== t.id))}
+                className="ml-1 grid h-6 w-6 shrink-0 place-items-center pill text-ink-fg/60 hover:bg-ink-fg/10 hover:text-ink-fg press focus-ring"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
             </motion.div>
           ))}
         </AnimatePresence>

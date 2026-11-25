@@ -8,15 +8,15 @@ import { ArrowRight, Check, Mail } from "lucide-react";
 import { Logo } from "../shell/app-shell";
 import { Button } from "../ui/button";
 import { Field, Input, Checkbox } from "../ui/field";
-import { EASE_OUT } from "../motion/stagger";
+import { DUR, EASE_OUT, SPRING } from "../motion/tokens";
 import { DEMO_EMAIL, DEMO_PASSWORD } from "@/lib/constants";
 
 export function AuthShell({ title, subtitle, children, footer }: { title: string; subtitle?: string; children: React.ReactNode; footer?: React.ReactNode }) {
   return (
     <div className="glow grid min-h-screen place-items-center bg-page px-4 py-10">
-      <motion.div layoutId="auth-card" className="w-full max-w-[420px]" initial={{ opacity: 0, y: 14, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ duration: 0.4, ease: EASE_OUT }}>
+      <motion.div layoutId="auth-card" className="w-full max-w-[420px]" initial={{ opacity: 0, y: 14, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ duration: DUR.base, ease: EASE_OUT }}>
         <div className="mb-6 flex justify-center">
-          <motion.div initial={{ rotate: -8, scale: 0.9 }} animate={{ rotate: 0, scale: 1 }} transition={{ type: "spring", stiffness: 200, damping: 14 }}>
+          <motion.div initial={{ rotate: -8, scale: 0.9 }} animate={{ rotate: 0, scale: 1 }} transition={SPRING.soft}>
             <Logo />
           </motion.div>
         </div>
@@ -119,7 +119,7 @@ export function ForgotPasswordView() {
   return (
     <AuthShell title="Reset your password" subtitle="Enter your email and we'll send a reset link." footer={<Link href="/login" className="font-bold text-ink">Back to log in</Link>}>
       {sent ? (
-        <div className="text-center"><motion.span className="mx-auto grid h-12 w-12 place-items-center pill bg-ink text-accent" initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 300, damping: 16 }}><Mail className="h-5 w-5" /></motion.span><p className="mt-4 text-[13.5px] text-muted">If an account exists for <b className="text-ink">{email}</b>, a reset link is on its way.</p><Button className="mt-5" variant="secondary" href="/reset-password">I have a reset link</Button></div>
+        <div className="text-center"><motion.span className="mx-auto grid h-12 w-12 place-items-center pill bg-ink text-accent" initial={{ scale: 0.8 }} animate={{ scale: 1 }} transition={SPRING.soft}><Mail className="h-5 w-5" /></motion.span><p className="mt-4 text-[13.5px] text-muted">If an account exists for <b className="text-ink">{email}</b>, a reset link is on its way.</p><Button className="mt-5" variant="secondary" href="/reset-password">I have a reset link</Button></div>
       ) : (
         <form onSubmit={submit} className="space-y-4"><Field label="Email"><Input autoFocus type="email" value={email} onChange={(e) => setEmail(e.target.value)} required /></Field><Button type="submit" className="w-full" size="lg" loading={loading}>Send reset link</Button></form>
       )}
@@ -170,7 +170,7 @@ export function VerifyEmailView({ email }: { email: string }) {
   return (
     <AuthShell title={state === "done" ? "Email verified" : state === "verifying" ? "Verifying…" : "Check your inbox"} subtitle={state === "waiting" ? `We sent a verification link to ${email}.` : undefined}>
       <div className="grid place-items-center py-4 text-center">
-        <motion.span key={state} className="grid h-16 w-16 place-items-center pill bg-ink text-accent" initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", stiffness: 260, damping: 16 }}>
+        <motion.span key={state} className="grid h-16 w-16 place-items-center pill bg-ink text-accent" initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={SPRING.soft}>
           {state === "done" ? <Check className="h-7 w-7" strokeWidth={2.5} /> : state === "verifying" ? <motion.span className="h-6 w-6 pill border-2 border-accent border-t-transparent" animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 0.9, ease: "linear" }} /> : <Mail className="h-6 w-6" />}
         </motion.span>
         {state === "waiting" && <><p className="mt-4 text-[13px] text-muted">Click the link in the email to continue. In this environment, you can simulate the click:</p><Button className="mt-4" onClick={() => setState("verifying")}>I clicked the link</Button><Link href="/onboarding" className="mt-3 text-[12px] font-semibold text-muted hover:text-ink">Skip for now</Link></>}

@@ -27,13 +27,13 @@ export function AccountsView({ currency: c, accounts, metrics: m, months }: { cu
       {accounts.length === 0 ? (
         <EmptyState icon="Wallet" title="Add your first account" description="Add your first account to start modeling your financial life." action={<Button href="/accounts/new">Add account</Button>} />
       ) : (
-        <Stagger stagger={0.06} className="space-y-5">
+        <Stagger className="space-y-5">
           <StaggerItem>
             <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
               <MetricCard dark label="Total Balance" value={positive + negative} format={(n) => formatMoney(n, c)} delta={<span className="text-accent">{accounts.length} accounts</span>} />
               <MetricCard label="Liquid Assets" value={positive} format={(n) => formatMoney(n, c)} delta="Cash, savings and investments" />
               <MetricCard label="Card Debt" value={Math.abs(negative)} format={(n) => formatMoney(n, c)} deltaTone={negative < 0 ? "warn" : "neutral"} delta={negative < 0 ? "Carried on credit accounts" : "No card debt"} />
-              <MetricCard label="Monthly Net Flow" value={m.savings} format={(n) => formatMoney(n, c, { sign: true })} deltaTone="good" delta={`${formatPct(m.savingsRate, 0)} savings rate`} />
+              <MetricCard label="Monthly Net Flow" value={m.savings} format={(n) => formatMoney(n, c, { sign: true })} deltaTone={m.savings >= 0 ? "good" : "warn"} delta={`${formatPct(m.savingsRate, 0)} savings rate`} />
             </div>
           </StaggerItem>
           <div className="grid gap-5 lg:grid-cols-3">
@@ -142,7 +142,7 @@ export function AccountDetailView({ currency: c, account, transactions, months, 
           <div className="flex items-end gap-2"><Button onClick={save}>Save</Button><Button variant="danger" icon={<Trash2 className="h-4 w-4" />} onClick={() => setConfirm(true)}>Delete</Button></div>
         </Card>
       )}
-      <Stagger stagger={0.06} className="space-y-5">
+      <Stagger className="space-y-5">
         <StaggerItem>
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             <MetricCard dark label="Current Balance" value={account.balance} format={(n) => formatMoney(n, c)} delta={<span className="text-accent">Updated {new Date(account.updatedAt).toLocaleDateString("en-GB")}</span>} />

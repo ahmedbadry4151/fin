@@ -31,13 +31,27 @@
   --shadow-float: 0 2px 6px rgba(0, 0, 0, 0.05), 0 18px 48px rgba(0, 0, 0, 0.09);
   --shadow-panel: 0 4px 10px rgba(0, 0, 0, 0.12), 0 24px 56px rgba(0, 0, 0, 0.18);
 
+  --twin-surface: #f9f7ef;
+  --twin-raised: rgba(90, 80, 55, 0.045);
+  --twin-hairline: rgba(90, 80, 55, 0.1);
+  --twin-divider: rgba(90, 80, 55, 0.07);
+  --twin-active: color-mix(in srgb, var(--accent) 12%, transparent);
+  --twin-active-line: color-mix(in srgb, var(--accent) 32%, transparent);
+  --twin-track: rgba(90, 80, 55, 0.14);
+  --twin-dot: color-mix(in srgb, var(--accent) 28%, transparent);
+  --twin-label: #6d6b62;
+  --twin-value: #222220;
+
   --t-instant: 120ms;
-  --t-fast: 220ms;
-  --t-base: 320ms;
-  --t-medium: 450ms;
-  --t-slow: 650ms;
-  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
-  --ease-in: cubic-bezier(0.55, 0, 0.45, 1);
+  --t-press: 180ms;
+  --t-tooltip: 140ms;
+  --t-fast: 200ms;
+  --t-base: 300ms;
+  --t-medium: 460ms;
+  --t-slow: 500ms;
+  --ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --ease-in: cubic-bezier(0.4, 0, 0.8, 0.4);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .dark {
@@ -68,6 +82,17 @@
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.2), 0 8px 24px rgba(0, 0, 0, 0.25);
   --shadow-float: 0 2px 6px rgba(0, 0, 0, 0.3), 0 18px 48px rgba(0, 0, 0, 0.45);
   --shadow-panel: 0 4px 10px rgba(0, 0, 0, 0.4), 0 24px 56px rgba(0, 0, 0, 0.5);
+
+  --twin-surface: #121210;
+  --twin-raised: rgba(245, 242, 235, 0.035);
+  --twin-hairline: rgba(245, 242, 235, 0.08);
+  --twin-divider: rgba(245, 242, 235, 0.07);
+  --twin-active: color-mix(in srgb, var(--accent) 14%, transparent);
+  --twin-active-line: color-mix(in srgb, var(--accent) 38%, transparent);
+  --twin-track: rgba(255, 255, 255, 0.1);
+  --twin-dot: color-mix(in srgb, var(--accent) 32%, transparent);
+  --twin-label: #a19e95;
+  --twin-value: #f5f2eb;
 }
 
 @theme inline {
@@ -126,6 +151,30 @@ body {
 ::selection {
   background: var(--accent);
   color: var(--accent-ink);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--accent) 45%, var(--card-3)) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--accent) 40%, var(--card-3));
+  border: 2px solid var(--page);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
 }
 
 @layer utilities {
@@ -188,12 +237,91 @@ body {
     background: #ece9df;
     color: #222220;
   }
-  .card-hover {
-    transition: transform var(--t-fast) var(--ease-out), box-shadow var(--t-fast) var(--ease-out), background-color var(--t-fast) var(--ease-out);
+  .twin-card {
+    background: var(--twin-surface);
+    color: var(--twin-value);
+    border: 1px solid var(--twin-hairline);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
   }
-  .card-hover:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-float);
+  .twin-kpi-strip {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    background: var(--twin-raised);
+    border: 1px solid var(--twin-hairline);
+    border-radius: var(--radius-compact);
+    overflow: hidden;
+  }
+  .twin-kpi {
+    container-type: inline-size;
+    min-width: 0;
+    padding: 14px 16px;
+    border-right: 1px solid var(--twin-divider);
+    transition: background-color var(--t-base) var(--ease-out);
+  }
+  .twin-kpi:last-child {
+    border-right: 0;
+  }
+  .twin-kpi:hover,
+  .twin-kpi.is-active {
+    background: var(--twin-active);
+    box-shadow: inset 0 0 0 1px var(--twin-active-line);
+  }
+  .twin-kpi-label {
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--twin-label);
+    line-height: 1.4;
+  }
+  .twin-kpi-value {
+    margin-top: 6px;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums lining-nums;
+    font-feature-settings: "tnum" 1, "lnum" 1;
+    font-size: clamp(0.875rem, 19cqw, 1.25rem);
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    color: var(--twin-value);
+  }
+  .twin-section-divider {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--twin-divider);
+  }
+  .micro-copy {
+    font-size: 0.75rem;
+    line-height: 1.4;
+    color: var(--twin-label);
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+  .twin-dot {
+    background: var(--twin-dot);
+  }
+  .twin-dot.is-active {
+    background: var(--accent);
+  }
+  @media (max-width: 640px) {
+    .twin-kpi-strip {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .twin-kpi:nth-child(2n) {
+      border-right: 0;
+    }
+    .twin-kpi:nth-child(-n + 2) {
+      border-bottom: 1px solid var(--twin-divider);
+    }
+  }
+  .card-hover {
+    transition: transform var(--t-press) var(--ease-out), box-shadow var(--t-press) var(--ease-out), background-color var(--t-press) var(--ease-out);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .card-hover:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-float);
+    }
   }
   .pill {
     border-radius: 999px;
@@ -217,11 +345,14 @@ body {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
-  .press {
-    transition: transform var(--t-instant) var(--ease-out);
-  }
+.press {
+  transition-property: transform, background-color, border-color, color, box-shadow;
+  transition-duration: var(--t-press);
+  transition-timing-function: var(--ease-out);
+}
+
   .press:active {
-    transform: scale(0.98);
+    transform: scale(0.96);
   }
   .divider {
     height: 1px;
@@ -230,6 +361,50 @@ body {
   .text-balance {
     text-wrap: balance;
   }
+}
+
+/* Theme switching: color-only interpolation on themed surfaces. The
+   prefers-reduced-motion block below neutralizes these transitions. */
+body,
+ aside,
+ header,
+ nav,
+  .card,
+  .card-dark,
+  .card-compact,
+  .twin-card,
+  .twin-kpi-strip,
+  .twin-kpi,
+  input,
+ select,
+ textarea,
+ button,
+ a,
+  :where([class*="bg-"]),
+  :where([class*="border-"]),
+  :where([class*="text-"]),
+  :where(svg [fill]),
+  :where(svg [stroke]) {
+  transition-property: background-color, border-color, color, box-shadow, fill, stroke;
+  transition-duration: var(--t-base);
+  transition-timing-function: var(--ease-out);
+}
+
+/* Keep existing control feedback timings while still interpolating theme colors. */
+.press,
+button,
+a {
+  transition-property: transform, background-color, border-color, color, box-shadow;
+  transition-duration: var(--t-press);
+  transition-timing-function: var(--ease-out);
+}
+
+input,
+select,
+textarea {
+  transition-property: background-color, border-color, color, box-shadow;
+  transition-duration: var(--t-fast);
+  transition-timing-function: var(--ease-out);
 }
 
 input[type="range"] {
@@ -277,6 +452,11 @@ textarea::placeholder {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+  .motion-reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
   }
 }
 

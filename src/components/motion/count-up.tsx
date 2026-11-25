@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useInView, useReducedMotion } from "framer-motion";
+import { useInView } from "framer-motion";
+import { DUR } from "./tokens";
 
 export function useCountUp(target: number, opts: { duration?: number; delay?: number; start?: boolean } = {}) {
-  const { duration = 1100, delay = 0, start = true } = opts;
-  const reduce = useReducedMotion();
+  const { duration = 600, delay = DUR.leadIn, start = true } = opts;
+  const reduce = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const [value, setValue] = useState(0);
   const current = useRef(0);
 

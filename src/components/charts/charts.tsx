@@ -1,14 +1,15 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 import { useMemo, useState } from "react";
 import { formatMoney } from "@/lib/format";
-import { EASE_OUT } from "../motion/stagger";
+import { DUR, EASE_OUT } from "../motion/tokens";
+import { usePrefersReducedMotion } from "../motion/use-prefers-reduced-motion";
 
 /* ---------------- Histogram ---------------- */
 export function Histogram({ bins, percentiles, currency = "EGP", height = 200, className = "" }: { bins: { from: number; to: number; count: number }[]; percentiles?: Record<string, number>; currency?: string; height?: number; className?: string }) {
-  const reduce = useReducedMotion();
   const [hover, setHover] = useState<number | null>(null);
+  const reduce = usePrefersReducedMotion();
   const max = Math.max(1, ...bins.map((b) => b.count));
   const total = bins.reduce((s, b) => s + b.count, 0);
   const median = percentiles?.p50;
@@ -29,12 +30,14 @@ export function Histogram({ bins, percentiles, currency = "EGP", height = 200, c
                 style={{ background: isMedian ? "var(--accent)" : "var(--ink)", opacity: isMedian ? 1 : hover === null ? 0.6 + 0.4 * (b.count / max) : hover === i ? 1 : 0.35 }}
                 initial={reduce ? false : { height: 0 }}
                 animate={{ height: `${(b.count / max) * 100}%` }}
-                transition={{ duration: 0.6, ease: EASE_OUT, delay: i * 0.02 }}
+                transition={{ duration: DUR.rare, ease: EASE_OUT, delay: DUR.leadIn + Math.min(i, 5) * 0.02 }}
               />
               {hover === i && (
-                <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.18 }} className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-max -translate-x-1/2 pill bg-ink px-3 py-1.5 text-[11px] text-ink-fg shadow-float">
-                  <span className="font-bold tnum">{Math.round((b.count / total) * 100)}%</span> of paths · <span className="tnum">{formatMoney(b.from, "", { compact: true })}–{formatMoney(b.to, "", { compact: true })}</span>
-                </motion.div>
+                <div className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-max -translate-x-1/2">
+                  <motion.div initial={reduce ? false : { opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: DUR.fast }} className="pill bg-ink px-3 py-1.5 text-[11px] text-ink-fg shadow-float">
+                    <span className="font-bold tnum">{Math.round((b.count / total) * 100)}%</span> of paths · <span className="tnum">{formatMoney(b.from, "", { compact: true })}–{formatMoney(b.to, "", { compact: true })}</span>
+                  </motion.div>
+                </div>
               )}
             </div>
           );
@@ -60,7 +63,7 @@ export function Histogram({ bins, percentiles, currency = "EGP", height = 200, c
 
 /* ---------------- Sparkline ---------------- */
 export function Sparkline({ data, color = "var(--accent)", height = 40, width = 120, fill = true, className = "", strokeWidth = 2 }: { data: number[]; color?: string; height?: number; width?: number; fill?: boolean; className?: string; strokeWidth?: number }) {
-  const reduce = useReducedMotion();
+  const reduce = usePrefersReducedMotion();
   const d = useMemo(() => {
     if (data.length < 2) return { line: "", area: "" };
     const min = Math.min(...data);
@@ -74,14 +77,14 @@ export function Sparkline({ data, color = "var(--accent)", height = 40, width = 
   return (
     <svg viewBox={`0 0 ${width} ${height}`} className={className} style={{ width, height }} aria-hidden>
       {fill && <path d={d.area} fill={color} opacity={0.12} />}
-      <motion.path d={d.line} fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" initial={reduce ? false : { pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1, ease: EASE_OUT }} />
+      <motion.path d={d.line} fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" initial={reduce ? false : { pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: DUR.rare, ease: EASE_OUT, delay: DUR.leadIn }} />
     </svg>
   );
 }
 
 /* ---------------- Horizontal bars ---------------- */
 export function HBars({ rows, currency = "EGP", format, className = "", onSelect, selected }: { rows: { key?: string; label: string; value: number; tone?: "ink" | "accent" | "muted" | "good" | "bad"; display?: string }[]; currency?: string; format?: (n: number) => string; className?: string; onSelect?: (key: string) => void; selected?: string | null }) {
-  const reduce = useReducedMotion();
+  const reduce = usePrefersReducedMotion();
   const max = Math.max(1, ...rows.map((r) => Math.abs(r.value)));
   const color = { ink: "var(--ink)", accent: "var(--accent)", muted: "var(--subtle)", good: "var(--good)", bad: "var(--bad)" };
   return (
@@ -96,7 +99,13 @@ export function HBars({ rows, currency = "EGP", format, className = "", onSelect
               <span className="tnum font-bold">{r.display ?? (format ? format(r.value) : formatMoney(r.value, currency))}</span>
             </div>
             <div className="h-2 w-full overflow-hidden pill bg-card3">
-              <motion.div className="h-full pill" style={{ background: color[r.tone ?? "ink"] }} initial={reduce ? false : { width: 0 }} animate={{ width: `${(Math.abs(r.value) / max) * 100}%` }} transition={{ duration: 0.7, ease: EASE_OUT, delay: i * 0.05 }} />
+              <motion.div
+                className="h-full pill"
+                style={{ background: color[r.tone ?? "ink"] }}
+                initial={reduce ? false : { width: "0%" }}
+                animate={{ width: `${(Math.abs(r.value) / max) * 100}%` }}
+                transition={{ duration: DUR.rare, ease: EASE_OUT, delay: DUR.leadIn + Math.min(i, 5) * 0.04 }}
+              />
             </div>
           </Tag>
         );
@@ -107,8 +116,8 @@ export function HBars({ rows, currency = "EGP", format, className = "", onSelect
 
 /* ---------------- Grouped bars (cash flow) ---------------- */
 export function GroupedBars({ groups, currency = "EGP", height = 220, className = "" }: { groups: { label: string; values: { key: string; value: number; tone: "ink" | "accent" | "muted" }[] }[]; currency?: string; height?: number; className?: string }) {
-  const reduce = useReducedMotion();
   const [hover, setHover] = useState<number | null>(null);
+  const reduce = usePrefersReducedMotion();
   const max = Math.max(1, ...groups.flatMap((g) => g.values.map((v) => v.value)));
   const color = { ink: "var(--ink)", accent: "var(--accent)", muted: "var(--card-3)" };
   return (
@@ -118,20 +127,22 @@ export function GroupedBars({ groups, currency = "EGP", height = 220, className 
           <div key={g.label} className="relative flex h-full flex-1 flex-col justify-end" onMouseEnter={() => setHover(gi)} onMouseLeave={() => setHover(null)}>
             <div className="flex h-full items-end justify-center gap-1">
               {g.values.map((v, vi) => (
-                <motion.div key={v.key} className="w-full max-w-[22px] rounded-t-md" style={{ background: color[v.tone], opacity: hover === null || hover === gi ? 1 : 0.4 }} initial={reduce ? false : { height: 0 }} animate={{ height: `${(v.value / max) * 100}%` }} transition={{ duration: 0.6, ease: EASE_OUT, delay: gi * 0.05 + vi * 0.04 }} />
+                <motion.div key={v.key} className="w-full max-w-[22px] rounded-t-md" style={{ background: color[v.tone], opacity: hover === null || hover === gi ? 1 : 0.4 }} initial={reduce ? false : { height: 0 }} animate={{ height: `${(v.value / max) * 100}%` }} transition={{ duration: DUR.rare, ease: EASE_OUT, delay: DUR.leadIn + Math.min(gi, 5) * 0.04 + vi * 0.04 }} />
               ))}
             </div>
             {hover === gi && (
-              <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.18 }} className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-max -translate-x-1/2 pill bg-ink px-3 py-2 text-[11px] text-ink-fg shadow-float">
-                <div className="font-semibold opacity-70">{g.label}</div>
-                {g.values.map((v) => (
-                  <div key={v.key} className="flex items-center gap-2">
-                    <span className="h-1.5 w-1.5 pill" style={{ background: v.tone === "muted" ? "var(--subtle)" : color[v.tone] }} />
-                    <span className="opacity-70">{v.key}</span>
-                    <span className="ml-auto font-bold tnum">{formatMoney(v.value, currency)}</span>
-                  </div>
-                ))}
-              </motion.div>
+              <div className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-max -translate-x-1/2">
+                <motion.div initial={reduce ? false : { opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: DUR.fast }} className="pill bg-ink px-3 py-2 text-[11px] text-ink-fg shadow-float">
+                  <div className="font-semibold opacity-70">{g.label}</div>
+                  {g.values.map((v) => (
+                    <div key={v.key} className="flex items-center gap-2">
+                      <span className="h-1.5 w-1.5 pill" style={{ background: v.tone === "muted" ? "var(--subtle)" : color[v.tone] }} />
+                      <span className="opacity-70">{v.key}</span>
+                      <span className="ml-auto font-bold tnum">{formatMoney(v.value, currency)}</span>
+                    </div>
+                  ))}
+                </motion.div>
+              </div>
             )}
           </div>
         ))}
@@ -149,7 +160,7 @@ export function GroupedBars({ groups, currency = "EGP", height = 220, className 
 
 /* ---------------- Donut ---------------- */
 export function Donut({ segments, size = 160, stroke = 18, centerLabel, centerValue, className = "" }: { segments: { label: string; value: number; color: string }[]; size?: number; stroke?: number; centerLabel?: string; centerValue?: string; className?: string }) {
-  const reduce = useReducedMotion();
+  const reduce = usePrefersReducedMotion();
   const total = Math.max(1, segments.reduce((s, x) => s + x.value, 0));
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
@@ -161,7 +172,7 @@ export function Donut({ segments, size = 160, stroke = 18, centerLabel, centerVa
         {segments.map((s, i) => {
           const len = (s.value / total) * c;
           const el = (
-            <motion.circle key={s.label} cx={size / 2} cy={size / 2} r={r} fill="none" stroke={s.color} strokeWidth={stroke} strokeDasharray={`${len} ${c - len}`} strokeDashoffset={-offset} initial={reduce ? false : { opacity: 0, strokeDasharray: `0 ${c}` }} animate={{ opacity: 1, strokeDasharray: `${len} ${c - len}` }} transition={{ duration: 0.8, ease: EASE_OUT, delay: i * 0.08 }} />
+            <motion.circle key={s.label} cx={size / 2} cy={size / 2} r={r} fill="none" stroke={s.color} strokeWidth={stroke} strokeDasharray={`${len} ${c - len}`} strokeDashoffset={-offset} initial={reduce ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: DUR.rare, ease: EASE_OUT, delay: DUR.leadIn + Math.min(i, 5) * 0.04 }} />
           );
           offset += len;
           return el;
@@ -179,8 +190,8 @@ export function Donut({ segments, size = 160, stroke = 18, centerLabel, centerVa
 
 /* ---------------- Simple line (history) ---------------- */
 export function LineChart({ points, currency = "EGP", height = 200, color = "var(--accent)", className = "", secondary }: { points: { label: string; value: number }[]; currency?: string; height?: number; color?: string; className?: string; secondary?: { label: string; value: number }[] }) {
-  const reduce = useReducedMotion();
   const [hover, setHover] = useState<number | null>(null);
+  const reduce = usePrefersReducedMotion();
   const W = 600;
   const H = height;
   const pad = { l: 44, r: 12, t: 12, b: 24 };
@@ -190,18 +201,20 @@ export function LineChart({ points, currency = "EGP", height = 200, color = "var
   const x = (i: number) => pad.l + (i / Math.max(1, points.length - 1)) * (W - pad.l - pad.r);
   const y = (v: number) => pad.t + (1 - (v - min) / (max - min || 1)) * (H - pad.t - pad.b);
   const d = (arr: { value: number }[]) => arr.map((p, i) => `${i === 0 ? "M" : "L"}${x(i).toFixed(1)},${y(p.value).toFixed(1)}`).join(" ");
+  const onMove = (e: React.PointerEvent<SVGSVGElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const px = ((e.clientX - rect.left) / rect.width) * W;
+    setHover(Math.max(0, Math.min(points.length - 1, Math.round(((px - pad.l) / (W - pad.l - pad.r)) * (points.length - 1)))));
+  };
   return (
     <div className={`relative ${className}`}>
       <svg
         viewBox={`0 0 ${W} ${H}`}
         className="w-full"
         style={{ height }}
-        onMouseMove={(e) => {
-          const rect = e.currentTarget.getBoundingClientRect();
-          const px = ((e.clientX - rect.left) / rect.width) * W;
-          setHover(Math.max(0, Math.min(points.length - 1, Math.round(((px - pad.l) / (W - pad.l - pad.r)) * (points.length - 1)))));
-        }}
-        onMouseLeave={() => setHover(null)}
+        onPointerDown={onMove}
+        onPointerMove={onMove}
+        onPointerLeave={() => setHover(null)}
       >
         {[0, 0.5, 1].map((t) => (
           <g key={t}>
@@ -216,18 +229,20 @@ export function LineChart({ points, currency = "EGP", height = 200, color = "var
             {p.label}
           </text>
         ))}
-        {secondary && <motion.path d={d(secondary)} fill="none" stroke="var(--muted)" strokeWidth={1.5} strokeDasharray="4 4" initial={reduce ? false : { pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1, ease: EASE_OUT }} />}
-        <motion.path d={`${d(points)} L${x(points.length - 1)},${H - pad.b} L${x(0)},${H - pad.b} Z`} fill={color} opacity={0.1} initial={reduce ? false : { opacity: 0 }} animate={{ opacity: 0.1 }} transition={{ duration: 1 }} />
-        <motion.path d={d(points)} fill="none" stroke={color} strokeWidth={2.5} strokeLinecap="round" initial={reduce ? false : { pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1, ease: EASE_OUT }} />
+        {secondary && <motion.path d={d(secondary)} fill="none" stroke="var(--muted)" strokeWidth={1.5} strokeDasharray="4 4" initial={reduce ? false : { pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: DUR.rare, ease: EASE_OUT, delay: DUR.leadIn }} />}
+        <motion.path d={`${d(points)} L${x(points.length - 1)},${H - pad.b} L${x(0)},${H - pad.b} Z`} fill={color} opacity={0.1} initial={reduce ? false : { opacity: 0 }} animate={{ opacity: 0.1 }} transition={{ duration: DUR.rare }} />
+        <motion.path d={d(points)} fill="none" stroke={color} strokeWidth={2.5} strokeLinecap="round" initial={reduce ? false : { pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: DUR.rare, ease: EASE_OUT, delay: DUR.leadIn }} />
         {points.map((p, i) => (
-          <motion.circle key={i} cx={x(i)} cy={y(p.value)} r={hover === i ? 6 : 3.5} fill={hover === i ? "var(--accent)" : "var(--card)"} stroke={color} strokeWidth={2} animate={{ r: hover === i ? 6 : 3.5 }} transition={{ duration: 0.15 }} />
+          <motion.circle key={i} cx={x(i)} cy={y(p.value)} r={hover === i ? 6 : 3.5} fill={hover === i ? "var(--accent)" : "var(--card)"} stroke={color} strokeWidth={2} animate={{ r: hover === i ? 6 : 3.5 }} transition={{ duration: DUR.press }} />
         ))}
       </svg>
       {hover !== null && (
-        <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.18 }} className="pointer-events-none absolute top-1 z-10 pill bg-ink px-3 py-1.5 text-[11.5px] text-ink-fg shadow-float" style={{ left: `${(x(hover) / W) * 100}%`, transform: `translateX(${x(hover) > W * 0.7 ? "-105%" : "8px"})` }}>
-          <span className="opacity-70">{points[hover].label}</span> <span className="ml-1 font-bold tnum">{formatMoney(points[hover].value, currency)}</span>
-          {secondary && <span className="ml-2 opacity-70 tnum">vs {formatMoney(secondary[hover]?.value ?? 0, "", { compact: true })}</span>}
-        </motion.div>
+        <div className="pointer-events-none absolute top-1 z-10" style={{ left: `${(x(hover) / W) * 100}%`, transform: `translateX(${x(hover) > W * 0.7 ? "-105%" : "8px"})` }}>
+          <motion.div initial={reduce ? false : { opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: DUR.fast }} className="pill bg-ink px-3 py-1.5 text-[11.5px] text-ink-fg shadow-float">
+            <span className="opacity-70">{points[hover].label}</span> <span className="ml-1 font-bold tnum">{formatMoney(points[hover].value, currency)}</span>
+            {secondary && <span className="ml-2 opacity-70 tnum">vs {formatMoney(secondary[hover]?.value ?? 0, "", { compact: true })}</span>}
+          </motion.div>
+        </div>
       )}
     </div>
   );

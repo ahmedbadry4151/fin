@@ -42,7 +42,7 @@ export function EconomyView({ currency: c, econ, stored, preset, simTwin }: { cu
       <PageHeader eyebrow="Economic Data · Environment" title="Economic Environment" description="The assumptions that feed every simulation. Historical context is shown for reference — none of these are forecasts." actions={<><StatusBadge tone="accent" className="capitalize">Preset: {preset}</StatusBadge><Button onClick={save} loading={saving} disabled={!dirty}>Save assumptions</Button></>} />
       <PillTabs items={TABS} current="/economy" layoutId="economy-tabs" className="mb-5" />
       <div className="grid gap-5 lg:grid-cols-3">
-        <Stagger stagger={0.06} className="space-y-4 lg:col-span-2">
+        <Stagger className="space-y-4 lg:col-span-2">
           {ASSUMPTION_DEFS.map((d) => (
             <StaggerItem key={d.key}>
               <AssumptionCard def={d} value={draft[d.key]} effective={econ[d.key]} onChange={(v) => setDraft({ ...draft, [d.key]: v })} open={open === d.key} onToggle={() => setOpen(open === d.key ? null : d.key)} />
@@ -116,7 +116,7 @@ export function PresetsView({ currency: c, current, simTwin, horizonYears }: { c
     <>
       <PageHeader eyebrow="Economic Data · Presets" title="Economic Scenario Presets" description="Named macro environments you can apply to your model in one step." />
       <PillTabs items={TABS} current="/economy/presets" layoutId="economy-tabs" className="mb-5" />
-      <Stagger stagger={0.06} className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <Stagger className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {ECONOMIC_PRESETS.map((p) => {
           const active = current === p.key;
           return (
