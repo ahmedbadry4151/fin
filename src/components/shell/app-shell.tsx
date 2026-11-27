@@ -1,15 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState, type ReactNode } from "react";
-import { Bell, Search, Moon, Sun, LayoutGrid, Fingerprint, GitBranch, Target, Sparkles, Menu, X, ChevronRight } from "lucide-react";
+import { Bell, Search, Moon, Sun, LayoutGrid, Fingerprint, Target, Sparkles, Menu, Plus, X, ChevronRight } from "lucide-react";
 import { Icon, Avatar } from "../ui/states";
 import { useTheme, CurrencyProvider } from "../providers";
 import { CommandPalette } from "./command-palette";
-import { DUR, EASE_IN, EASE_OUT, SPRING } from "../motion/tokens";
-import { useDialogBehavior } from "../ui/overlay";
+import { PAGE, PAGE_EXIT, SPRING } from "../motion/tokens";
+import { Drawer, useDialogBehavior } from "../ui/overlay";
+import { TransactionForm } from "../views/transactions";
 
 export type ShellUser = { id: number; name: string; email: string; currency: string };
 
@@ -54,7 +55,6 @@ const NAV: { group: string; items: { href: string; label: string; icon: string }
 const MOBILE = [
   { href: "/overview", label: "Home", icon: LayoutGrid },
   { href: "/twin", label: "Twin", icon: Fingerprint },
-  { href: "/scenarios", label: "Scenarios", icon: GitBranch },
   { href: "/goals", label: "Goals", icon: Target },
   { href: "/ai", label: "AI", icon: Sparkles },
 ];
@@ -75,13 +75,15 @@ function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(href + "/");
 }
 
-export function AppShell({ user, unread, children }: { user: ShellUser; unread: number; children: ReactNode }) {
+export function AppShell({ user, unread, accounts, children }: { user: ShellUser; unread: number; accounts: { id: number; name: string }[]; children: ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const { theme, toggle } = useTheme();
+  const [addOpen, setAddOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
-  const enter = { duration: DUR.modal, ease: EASE_OUT };
-  const exit = { duration: DUR.exit, ease: EASE_IN };
+  const enter = PAGE;
+  const exit = PAGE_EXIT;
   const mobileNavRef = useDialogBehavior(moreOpen, () => setMoreOpen(false));
 
   useEffect(() => {
@@ -169,13 +171,13 @@ export function AppShell({ user, unread, children }: { user: ShellUser; unread: 
         </header>
 
         {/* Content */}
-        <main className="min-h-[calc(100vh-56px)] px-4 pb-28 pt-6 lg:ml-[232px] lg:px-7 lg:pb-12">
+        <main className="min-h-[calc(100vh-56px)] px-4 pb-36 pt-6 lg:ml-[232px] lg:px-7 lg:pb-12">
           <div className="mx-auto w-full max-w-[1280px]">{children}</div>
         </main>
 
         {/* Mobile bottom nav */}
         <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-canvas/95 backdrop-blur-md lg:hidden no-print" aria-label="Mobile">
-          <ul className="grid grid-cols-6">
+          <ul className="grid grid-cols-5">
             {MOBILE.map((it) => {
               const active = isActive(pathname, it.href);
               return (
@@ -183,7 +185,7 @@ export function AppShell({ user, unread, children }: { user: ShellUser; unread: 
                   <Link href={it.href} className={`relative flex flex-col items-center gap-1 py-2.5 text-[10px] font-semibold ${active ? "text-ink" : "text-muted"}`}>
                     {active && <motion.span layoutId="mobile-pill" className="absolute top-1 h-7 w-12 pill bg-accent/40" transition={{ type: "spring", stiffness: 400, damping: 32 }} />}
                     <it.icon className="relative z-10 h-4.5 w-4.5" strokeWidth={1.7} />
-                    <span className="relative z-10">{it.label}</span>
+                    <span className="relative z-10 whitespace-nowrap">{it.label}</span>
                   </Link>
                 </li>
               );
@@ -201,7 +203,7 @@ export function AppShell({ user, unread, children }: { user: ShellUser; unread: 
           {moreOpen && (
             <div ref={mobileNavRef} tabIndex={-1} className="fixed inset-0 z-[80] lg:hidden" role="dialog" aria-modal="true">
               <motion.div className="absolute inset-0 bg-ink-deep/40" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: exit }} transition={enter} onClick={() => setMoreOpen(false)} />
-              <motion.div className="absolute inset-x-0 bottom-0 rounded-t-[26px] bg-card p-5 pb-8 shadow-panel" initial={{ y: 32, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 16, opacity: 0, transition: exit }} transition={enter}>
+              <motion.div className="absolute inset-x-0 bottom-0 max-h-[85dvh] overflow-y-auto no-scrollbar rounded-t-[26px] bg-card p-5 pb-8 shadow-panel" initial={{ y: 32, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 16, opacity: 0, transition: exit }} transition={enter}>
                 <div className="mb-3 flex items-center justify-between">
                   <span className="text-[15px] font-bold">More</span>
                   <button onClick={() => setMoreOpen(false)} className="grid h-8 w-8 place-items-center pill bg-card2" aria-label="Close">
@@ -212,6 +214,7 @@ export function AppShell({ user, unread, children }: { user: ShellUser; unread: 
                   {[
                     { href: "/accounts", label: "Accounts", icon: "Wallet" },
                     { href: "/transactions", label: "Transactions", icon: "ArrowLeftRight" },
+                    { href: "/scenarios", label: "Scenarios", icon: "GitBranch" },
                     { href: "/simulations", label: "Simulations", icon: "Activity" },
                     { href: "/analytics", label: "Analytics", icon: "BarChart3" },
                     { href: "/health", label: "Financial Health", icon: "HeartPulse" },
@@ -235,6 +238,20 @@ export function AppShell({ user, unread, children }: { user: ShellUser; unread: 
             </div>
           )}
         </AnimatePresence>
+
+        {/* Global add-transaction entry point (FR-16) */}
+        <Drawer open={addOpen} onClose={() => setAddOpen(false)} title="Add transaction">
+          <TransactionForm embedded currency={user.currency} accounts={accounts} onCreated={() => { setAddOpen(false); router.refresh(); }} />
+        </Drawer>
+        <button
+          type="button"
+          onClick={() => setAddOpen(true)}
+          aria-label="Add transaction"
+          title="Add transaction"
+          className="fixed bottom-20 right-4 z-30 grid h-14 w-14 place-items-center pill bg-accent text-accent-ink shadow-card press focus-ring transition-transform hover:scale-[1.04] lg:bottom-6 lg:right-6 no-print"
+        >
+          <Plus className="h-6 w-6" />
+        </button>
 
         <CommandPalette key={paletteOpen ? "open" : "closed"} open={paletteOpen} onClose={() => setPaletteOpen(false)} />
       </div>
