@@ -7,7 +7,7 @@ import { Plus, Trash2, Play, SlidersHorizontal } from "lucide-react";
 import { Stagger, StaggerItem } from "../motion/stagger";
 import { Card, CardTitle, MetricCard, PageHeader, KeyValue } from "../ui/card";
 import { Button } from "../ui/button";
-import { Field, Input, MoneyInput, OptionCard } from "../ui/field";
+import { DateInput, Field, Input, MoneyInput, OptionCard, localISO } from "../ui/field";
 import { ConfirmDialog } from "../ui/overlay";
 import { EmptyState, Icon } from "../ui/states";
 import { StatusBadge } from "../ui/pill";
@@ -17,7 +17,7 @@ import { FanChart } from "../charts/fan-chart";
 import { HBars } from "../charts/charts";
 import { GoalCard, GOAL_ICON, STATUS_META, type GoalCardData } from "../domain/cards";
 import { useToast } from "../motion/toast";
-import { formatMoney, formatPct, formatDate, toISODate, addMonths } from "@/lib/format";
+import { formatMoney, formatPct, formatDate, addMonths } from "@/lib/format";
 import { GOAL_TYPES, goalStatus, monthsBetween, requiredMonthly } from "@/lib/finance";
 import type { EconAssumptions, SimResults } from "@/lib/simulation";
 
@@ -57,7 +57,7 @@ export function GoalsView({ currency: c, goals, probabilities }: { currency: str
 export function GoalForm({ currency, initial, onDone }: { currency: string; initial?: GoalCardData; onDone?: () => void }) {
   const router = useRouter();
   const { toast } = useToast();
-  const [form, setForm] = useState({ name: initial?.name ?? "", type: initial?.type ?? "home", targetAmount: initial?.targetAmount ?? 0, currentAmount: initial?.currentAmount ?? 0, targetDate: initial?.targetDate ?? toISODate(addMonths(new Date(), 36)), monthlyContribution: initial?.monthlyContribution ?? 0 });
+  const [form, setForm] = useState({ name: initial?.name ?? "", type: initial?.type ?? "home", targetAmount: initial?.targetAmount ?? 0, currentAmount: initial?.currentAmount ?? 0, targetDate: initial?.targetDate ?? localISO(addMonths(new Date(), 36)), monthlyContribution: initial?.monthlyContribution ?? 0 });
   const [saving, setSaving] = useState(false);
   const months = monthsBetween(new Date(), new Date(form.targetDate));
   const required = requiredMonthly(form.targetAmount, form.currentAmount, months, 0.1);
@@ -86,7 +86,7 @@ export function GoalForm({ currency, initial, onDone }: { currency: string; init
         </div>
         <div className="grid gap-4 md:grid-cols-2">
           <Field label="Goal name"><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Buy a Home" /></Field>
-          <Field label="Target date"><Input type="date" value={form.targetDate} onChange={(e) => setForm({ ...form, targetDate: e.target.value })} /></Field>
+          <Field label="Target date"><DateInput value={form.targetDate} onChange={(iso) => setForm({ ...form, targetDate: iso })} /></Field>
           <Field label="Target amount"><MoneyInput currency={currency} value={form.targetAmount} onChange={(v) => setForm({ ...form, targetAmount: v })} /></Field>
           <Field label="Current amount" hint="Already set aside for this goal."><MoneyInput currency={currency} value={form.currentAmount} onChange={(v) => setForm({ ...form, currentAmount: v })} /></Field>
           <Field label="Monthly contribution" hint={form.targetAmount > 0 ? `Deterministic estimate at 10% return: ${formatMoney(required, currency)}/month` : undefined}><MoneyInput currency={currency} value={form.monthlyContribution} onChange={(v) => setForm({ ...form, monthlyContribution: v })} /></Field>

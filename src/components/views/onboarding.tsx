@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight, Check, Plus, Trash2, Clock, ShieldCheck, Info } from "lucide-react";
 import { Logo } from "../shell/app-shell";
 import { Button } from "../ui/button";
-import { Field, Input, MoneyInput, Select, OptionCard, Slider } from "../ui/field";
+import { DateInput, Field, Input, MoneyInput, Select, OptionCard, Slider, localISO } from "../ui/field";
 import { StatusBadge, Chip } from "../ui/pill";
 import { Icon } from "../ui/states";
 import { AnimatedNumber, useCountUp } from "../motion/count-up";
@@ -15,7 +15,7 @@ import { InfoTip } from "../motion/primitives";
 import { CircularProgress } from "../motion/progress";
 import { DUR, EASE_IN, EASE_IN_OUT, EASE_OUT, PAGE, PAGE_EXIT, SPRING } from "../motion/tokens";
 import { useTheme } from "../providers";
-import { formatMoney, formatPct, toISODate, addMonths } from "@/lib/format";
+import { formatMoney, formatPct, addMonths } from "@/lib/format";
 import { CURRENCIES, EMPLOYMENT_TYPES, EXPENSE_CATEGORIES, ASSET_TYPES, LIABILITY_TYPES, GOAL_TYPES, splitExpenses } from "@/lib/finance";
 import { ASSUMPTION_DEFS, DEFAULT_ASSUMPTIONS, PLANNING_STYLES } from "@/lib/economy";
 import { GOAL_ICON } from "../domain/cards";
@@ -160,13 +160,13 @@ export function OnboardingWizard({ initialName, initialCurrency }: { initialName
             )}
             {step === 8 && (
               <Section title="What are you building toward?" sub="Select any that apply — details appear as you pick.">
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">{GOAL_TYPES.map((t) => { const on = goals.some((g) => g.type === t.key); return <OptionCard key={t.key} compact selected={on} icon={<Icon name={GOAL_ICON[t.key]} className="h-4 w-4" />} title={t.label} onClick={() => setGoals(on ? goals.filter((g) => g.type !== t.key) : [...goals, { id: Date.now(), type: t.key, name: t.label, targetAmount: t.key === "emergency" ? Math.round(totals.essential * 6) : t.key === "home" ? 1500000 : t.key === "car" ? 450000 : 100000, currentAmount: 0, targetDate: toISODate(addMonths(new Date(), t.key === "home" ? 96 : 36)), monthlyContribution: 0 }])} />; })}</div>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">{GOAL_TYPES.map((t) => { const on = goals.some((g) => g.type === t.key); return <OptionCard key={t.key} compact selected={on} icon={<Icon name={GOAL_ICON[t.key]} className="h-4 w-4" />} title={t.label} onClick={() => setGoals(on ? goals.filter((g) => g.type !== t.key) : [...goals, { id: Date.now(), type: t.key, name: t.label, targetAmount: t.key === "emergency" ? Math.round(totals.essential * 6) : t.key === "home" ? 1500000 : t.key === "car" ? 450000 : 100000, currentAmount: 0, targetDate: localISO(addMonths(new Date(), t.key === "home" ? 96 : 36)), monthlyContribution: 0 }])} />; })}</div>
                 <AnimatePresence>{goals.map((g) => (
                   <motion.div key={g.id} initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0, transition: { duration: DUR.exit, ease: EASE_IN } }} className="overflow-hidden">
                     <div className="card mt-3 grid gap-3 p-4 sm:grid-cols-5">
                       <Field label="Name" className="sm:col-span-1"><Input value={g.name} onChange={(e) => setGoals(goals.map((x) => (x.id === g.id ? { ...x, name: e.target.value } : x)))} /></Field>
                       <Field label="Target"><MoneyInput currency={c} value={g.targetAmount} onChange={(v) => setGoals(goals.map((x) => (x.id === g.id ? { ...x, targetAmount: v } : x)))} /></Field>
-                      <Field label="Target date"><Input type="date" value={g.targetDate} onChange={(e) => setGoals(goals.map((x) => (x.id === g.id ? { ...x, targetDate: e.target.value } : x)))} /></Field>
+                      <Field label="Target date"><DateInput value={g.targetDate} onChange={(iso) => setGoals(goals.map((x) => (x.id === g.id ? { ...x, targetDate: iso } : x)))} /></Field>
                       <Field label="Current"><MoneyInput currency={c} value={g.currentAmount} onChange={(v) => setGoals(goals.map((x) => (x.id === g.id ? { ...x, currentAmount: v } : x)))} /></Field>
                       <Field label="Monthly"><MoneyInput currency={c} value={g.monthlyContribution} onChange={(v) => setGoals(goals.map((x) => (x.id === g.id ? { ...x, monthlyContribution: v } : x)))} /></Field>
                     </div>

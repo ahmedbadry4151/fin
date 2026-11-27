@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Check, ChevronDown, ChevronUp } from "lucide-react";
+import { CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp } from "lucide-react";
 import { Children, forwardRef, Fragment, isValidElement, useEffect, useId, useRef, useState, type ChangeEvent, type InputHTMLAttributes, type KeyboardEvent, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from "react";
 import { cn } from "./button";
 import { DUR, SPRING } from "../motion/tokens";
@@ -65,6 +65,92 @@ export function MoneyInput({ value, onChange, currency = "EGP", className, min =
       step={step}
       {...rest}
     />
+  );
+}
+
+export const localISO = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+export function DateInput({ value, onChange, className }: { value: string; onChange: (iso: string) => void; className?: string }) {
+  const rootRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const [open, setOpen] = useState(false);
+  const [today, setToday] = useState<Date | null>(null);
+  const [view, setView] = useState(() => {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+    const d = m ? new Date(Number(m[1]), Number(m[2]) - 1, 1) : new Date();
+    return { y: d.getFullYear(), m: d.getMonth() };
+  });
+
+  useEffect(() => {
+    if (!open) return;
+    const onPointer = (e: PointerEvent) => {
+      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("pointerdown", onPointer);
+    return () => document.removeEventListener("pointerdown", onPointer);
+  }, [open]);
+
+  const openPicker = () => {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+    if (m) setView({ y: Number(m[1]), m: Number(m[2]) - 1 });
+    setToday(new Date());
+    setOpen(true);
+  };
+  const shiftMonth = (delta: number) => {
+    const d = new Date(view.y, view.m + delta, 1);
+    setView({ y: d.getFullYear(), m: d.getMonth() });
+  };
+
+  const cells: (Date | null)[] = [];
+  for (let i = 0; i < new Date(view.y, view.m, 1).getDay(); i++) cells.push(null);
+  for (let d = 1; d <= new Date(view.y, view.m + 1, 0).getDate(); d++) cells.push(new Date(view.y, view.m, d));
+  while (cells.length < 42) cells.push(null);
+
+  const display = /^(\d{4})-(\d{2})-(\d{2})$/.test(value)
+    ? `${value.slice(8, 10)}/${value.slice(5, 7)}/${value.slice(0, 4)}`
+    : "Select date";
+
+  return (
+    <div ref={rootRef} className="relative" onKeyDown={(e) => { if (e.key === "Escape" && open) { e.preventDefault(); e.stopPropagation(); setOpen(false); triggerRef.current?.focus(); } }}>
+      <button ref={triggerRef} type="button" aria-haspopup="dialog" aria-expanded={open} aria-label={value ? `Date: ${display}` : "Choose date"} onClick={() => (open ? setOpen(false) : openPicker())} className={cn(inputBase, "flex h-11 items-center justify-between gap-2 text-left", className)}>
+        <span className={value ? "" : "text-subtle"}>{display}</span>
+        <CalendarDays className="h-4 w-4 shrink-0 text-muted" />
+      </button>
+      {open && (
+        <div role="dialog" aria-label="Choose date" className="absolute right-0 top-[calc(100%+6px)] z-[70] w-[300px] max-w-[calc(100vw-32px)] rounded-2xl border border-line bg-card p-3 shadow-panel">
+          <div className="mb-2 flex items-center justify-between">
+            <button type="button" aria-label="Previous month" onClick={() => shiftMonth(-1)} className="grid h-8 w-8 place-items-center pill text-muted hover:bg-card2 hover:text-ink focus-ring"><ChevronLeft className="h-4 w-4" /></button>
+            <span className="text-[13px] font-bold">{new Date(view.y, view.m, 1).toLocaleDateString("en-GB", { month: "long", year: "numeric" })}</span>
+            <button type="button" aria-label="Next month" onClick={() => shiftMonth(1)} className="grid h-8 w-8 place-items-center pill text-muted hover:bg-card2 hover:text-ink focus-ring"><ChevronRight className="h-4 w-4" /></button>
+          </div>
+          <div className="grid grid-cols-7 gap-0.5 text-center text-[10.5px] font-semibold text-muted">{["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => <span key={d}>{d}</span>)}</div>
+          <div className="mt-1 grid grid-cols-7 gap-0.5">
+            {cells.map((d, i) => {
+              if (!d) return <span key={i} />;
+              const iso = localISO(d);
+              const isToday = !!today && iso === localISO(today);
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  aria-label={d.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
+                  aria-pressed={iso === value}
+                  aria-current={isToday ? "date" : undefined}
+                  onClick={() => { onChange(iso); setOpen(false); triggerRef.current?.focus(); }}
+                  className={cn("grid h-9 place-items-center rounded-xl text-[12px] font-semibold hover:bg-card2 focus-ring", iso === value ? "bg-accent text-accent-ink hover:bg-accent" : isToday ? "ring-1 ring-accent text-ink" : "text-ink")}
+                >
+                  {d.getDate()}
+                </button>
+              );
+            })}
+          </div>
+          <div className="mt-2 flex justify-between border-t border-line pt-2">
+            <button type="button" onClick={() => { onChange(""); setOpen(false); triggerRef.current?.focus(); }} className="text-[12px] font-bold text-muted hover:text-ink">Clear</button>
+            <button type="button" onClick={() => { const t = new Date(); onChange(localISO(t)); setView({ y: t.getFullYear(), m: t.getMonth() }); setOpen(false); triggerRef.current?.focus(); }} className="text-[12px] font-bold text-accent hover:brightness-95">Today</button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 

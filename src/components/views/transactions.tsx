@@ -6,13 +6,13 @@ import { Search, Plus, Upload, Trash2, X } from "lucide-react";
 import { Card, PageHeader, KeyValue } from "../ui/card";
 import { Button, IconButton } from "../ui/button";
 import { FilterPill, SegmentedControl, StatusBadge } from "../ui/pill";
-import { Field, Input, MoneyInput, Select } from "../ui/field";
+import { DateInput, Field, Input, MoneyInput, Select, localISO } from "../ui/field";
 import { Drawer, ConfirmDialog } from "../ui/overlay";
 import { EmptyState } from "../ui/states";
 import { ReflowList, ReflowItem } from "../motion/primitives";
 import { TransactionRow, type TxData } from "../domain/cards";
 import { useToast } from "../motion/toast";
-import { formatMoney, formatDate, toISODate } from "@/lib/format";
+import { formatMoney, formatDate } from "@/lib/format";
 import { EXPENSE_CATEGORIES, CATEGORY_LABEL } from "@/lib/finance";
 import { MAX_TRANSACTION_AMOUNT, APP_BOOT_TIME } from "@/lib/constants";
 
@@ -131,16 +131,17 @@ export function TransactionForm({ currency, accounts, embedded = false, onCreate
   const router = useRouter();
   const params = useSearchParams();
   const { toast } = useToast();
-  const [form, setForm] = useState({ description: "", category: "food", type: "expense", amount: 0, date: toISODate(new Date()), accountId: Number(params.get("account")) || accounts[0]?.id || 0 });
+  const [form, setForm] = useState({ description: "", category: "food", type: "expense", amount: 0, date: localISO(new Date()), accountId: Number(params.get("account")) || accounts[0]?.id || 0 });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function submit() {
     if (!form.description.trim() || form.amount <= 0) return setError("Add a description and an amount greater than zero.");
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(form.date)) return setError("Choose a valid date.");
     if (form.amount > MAX_TRANSACTION_AMOUNT) return setError(`Amount must be at most ${formatMoney(MAX_TRANSACTION_AMOUNT, currency)}.`);
     setError(null);
     setSaving(true);
-    const r = await fetch("/api/transactions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+    const r = await fetch("/api/transactions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...form, accountId: form.accountId > 0 ? form.accountId : null }) });
     setSaving(false);
     if (!r.ok) return setError("We couldn't save this transaction.");
     const d = await r.json();
@@ -159,7 +160,7 @@ export function TransactionForm({ currency, accounts, embedded = false, onCreate
       <Field label="Description"><Input autoFocus value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Groceries, salary, rent…" /></Field>
       <div className="grid grid-cols-2 gap-3">
         <Field label="Amount"><MoneyInput currency={currency} value={form.amount} max={MAX_TRANSACTION_AMOUNT} onChange={(v) => setForm({ ...form, amount: v })} /></Field>
-        <Field label="Date"><Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></Field>
+        <Field label="Date"><DateInput value={form.date} onChange={(iso) => setForm({ ...form, date: iso })} /></Field>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <Field label="Category">
@@ -167,7 +168,7 @@ export function TransactionForm({ currency, accounts, embedded = false, onCreate
             {form.type === "income" ? <><option value="salary">Salary</option><option value="freelance">Freelance</option><option value="income">Other income</option></> : form.type === "transfer" ? <><option value="savings">Savings</option><option value="investment">Investment</option><option value="transfer">Transfer</option></> : EXPENSE_CATEGORIES.map((cat) => <option key={cat.key} value={cat.key}>{cat.label}</option>)}
           </Select>
         </Field>
-        <Field label="Account"><Select value={form.accountId} onChange={(e) => setForm({ ...form, accountId: Number(e.target.value) })}>{accounts.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}</Select></Field>
+        <Field label="Account"><Select value={form.accountId} onChange={(e) => setForm({ ...form, accountId: Number(e.target.value) })}><option value={0}>Cash · Manual</option><option value={-1}>Other</option>{accounts.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}</Select></Field>
       </div>
       {error && <div className="rounded-xl bg-warn-soft px-3 py-2 text-[12px] font-medium text-warn">{error}</div>}
       <div className="flex justify-end gap-2 pt-2">{!embedded && <Button variant="secondary" href="/transactions">Cancel</Button>}<Button onClick={submit} loading={saving} className={embedded ? "w-full" : ""}>Add transaction</Button></div>
