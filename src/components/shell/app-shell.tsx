@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState, type ReactNode } from "react";
-import { Bell, Search, Moon, Sun, LayoutGrid, Fingerprint, Target, Sparkles, Menu, Plus, X, ChevronRight } from "lucide-react";
+import { Bell, Search, Moon, Sun, LayoutGrid, Fingerprint, Target, Sparkles, Menu, Plus, X, ChevronRight, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { Icon, Avatar } from "../ui/states";
 import { useTheme, CurrencyProvider } from "../providers";
 import { CommandPalette } from "./command-palette";
@@ -80,6 +80,7 @@ export function AppShell({ user, unread, accounts, children }: { user: ShellUser
   const router = useRouter();
   const { theme, toggle } = useTheme();
   const [addOpen, setAddOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const enter = PAGE;
@@ -99,9 +100,15 @@ export function AppShell({ user, unread, accounts, children }: { user: ShellUser
 
   return (
     <CurrencyProvider currency={user.currency}>
-      <div className="min-h-screen bg-page">
+      <div className="min-h-screen bg-page" style={{ ["--sidebar-w" as string]: sidebarOpen ? "232px" : "0px" }}>
         {/* Sidebar */}
-        <aside className="fixed inset-y-0 left-0 z-40 hidden w-[232px] flex-col border-r border-line bg-canvas px-3 py-4 lg:flex no-print">
+        <motion.aside
+          animate={{ x: sidebarOpen ? 0 : -232, opacity: sidebarOpen ? 1 : 0 }}
+          transition={PAGE}
+          inert={!sidebarOpen}
+          aria-hidden={!sidebarOpen}
+          className={`fixed inset-y-0 left-0 z-40 hidden w-[232px] flex-col border-r border-line bg-canvas px-3 py-4 lg:flex no-print ${sidebarOpen ? "" : "pointer-events-none"}`}
+        >
           <div className="px-2">
             <Logo />
           </div>
@@ -138,10 +145,13 @@ export function AppShell({ user, unread, accounts, children }: { user: ShellUser
               <Avatar name={user.name} size={30} />
             </Link>
           </div>
-        </aside>
+        </motion.aside>
 
         {/* Header */}
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-line bg-page/80 px-4 backdrop-blur-md lg:ml-[232px] lg:px-7 no-print">
+        <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-line bg-page/80 px-4 backdrop-blur-md lg:ml-[var(--sidebar-w)] lg:px-7 lg:transition-[margin-left] lg:duration-[420ms] lg:ease-out no-print">
+          <button onClick={() => setSidebarOpen((o) => !o)} className="hidden h-9 w-9 place-items-center pill text-muted hover:text-ink hover:bg-card2 focus-ring lg:grid" aria-label={sidebarOpen ? "Hide sidebar" : "Show sidebar"}>
+            {sidebarOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}
+          </button>
           <div className="lg:hidden">
             <Logo />
           </div>
@@ -171,7 +181,7 @@ export function AppShell({ user, unread, accounts, children }: { user: ShellUser
         </header>
 
         {/* Content */}
-        <main className="min-h-[calc(100vh-56px)] px-4 pb-36 pt-6 lg:ml-[232px] lg:px-7 lg:pb-12">
+        <main className="min-h-[calc(100vh-56px)] px-4 pb-36 pt-6 lg:ml-[var(--sidebar-w)] lg:px-7 lg:pb-12 lg:transition-[margin-left] lg:duration-[420ms] lg:ease-out">
           <div className="mx-auto w-full max-w-[1280px]">{children}</div>
         </main>
 
