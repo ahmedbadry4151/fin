@@ -10,13 +10,12 @@ export function useCountUp(target: number, opts: { duration?: number; delay?: nu
   const [value, setValue] = useState(0);
   const current = useRef(0);
 
+  const to = Number.isFinite(target) ? target : 0;
   useEffect(() => {
     if (!start) return;
     const from = current.current;
-    const to = Number.isFinite(target) ? target : 0;
     if (reduce) {
       current.current = to;
-      setValue(to);
       return;
     }
     if (from === to) return;
@@ -34,9 +33,11 @@ export function useCountUp(target: number, opts: { duration?: number; delay?: nu
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [target, duration, delay, reduce, start]);
+  }, [to, duration, delay, reduce, start]);
 
-  return start ? value : 0;
+  // Reduced motion: derive the final value during render instead of setting
+  // state from an effect (react-hooks/set-state-in-effect).
+  return start ? (reduce ? to : value) : 0;
 }
 
 export function AnimatedNumber({

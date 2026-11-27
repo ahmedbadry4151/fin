@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Search, Plus, Upload, Trash2, X } from "lucide-react";
 import { Card, PageHeader, KeyValue } from "../ui/card";
 import { Button, IconButton } from "../ui/button";
@@ -14,13 +14,16 @@ import { TransactionRow, type TxData } from "../domain/cards";
 import { useToast } from "../motion/toast";
 import { formatMoney, formatDate, toISODate } from "@/lib/format";
 import { EXPENSE_CATEGORIES, CATEGORY_LABEL } from "@/lib/finance";
+import { MAX_TRANSACTION_AMOUNT, APP_BOOT_TIME } from "@/lib/constants";
 
 type TType = "all" | "income" | "expense" | "transfer";
 
 export function TransactionsView({ currency: c, accounts, initial, initialQuery, initialCategory, initialType }: { currency: string; accounts: { id: number; name: string }[]; initial: TxData[]; initialQuery: string; initialCategory: string; initialType: string }) {
   const router = useRouter();
   const { toast } = useToast();
-  const [rows, setRows] = useState(initial);
+  // Derived rows: local edits override the server-fed list; no state sync in an effect.
+  const [overrides, setOverrides] = useState<TxData[] | null>(null);
+  const rows = overrides ?? initial;
   const [q, setQ] = useState(initialQuery);
   const [type, setType] = useState<TType>((["all", "income", "expense", "transfer"].includes(initialType) ? initialType : "all") as TType);
   const [category, setCategory] = useState(initialCategory);
@@ -32,11 +35,9 @@ export function TransactionsView({ currency: c, accounts, initial, initialQuery,
   const [confirmDelete, setConfirmDelete] = useState<TxData | null>(null);
   const accountName = useMemo(() => Object.fromEntries(accounts.map((a) => [a.id, a.name])), [accounts]);
 
-  useEffect(() => setRows(initial), [initial]);
-
   const filtered = useMemo(() => {
     const term = q.trim().toLowerCase();
-    const since = range === "all" ? null : Date.now() - Number(range) * 86400000;
+    const since = range === "all" ? null : APP_BOOT_TIME - Number(range) * 86400000;
     return rows.filter((t) => (type === "all" || t.type === type) && (!category || t.category === category) && (!accountId || t.accountId === accountId) && (!since || new Date(t.date).getTime() >= since) && (!term || t.description.toLowerCase().includes(term) || (CATEGORY_LABEL[t.category] ?? t.category).toLowerCase().includes(term)));
   }, [rows, q, type, category, accountId, range]);
 
@@ -44,7 +45,7 @@ export function TransactionsView({ currency: c, accounts, initial, initialQuery,
   const categories = useMemo(() => Array.from(new Set(rows.map((t) => t.category))).sort(), [rows]);
 
   async function remove(t: TxData) {
-    setRows((r) => r.filter((x) => x.id !== t.id));
+    setOverrides((r) => (r ?? initial).filter((x) => x.id !== t.id));
     setSelected(null);
     setConfirmDelete(null);
     await fetch("/api/transactions", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: t.id }) });
@@ -100,7 +101,7 @@ export function TransactionsView({ currency: c, accounts, initial, initialQuery,
           </Card>
           <Card>
             <div className="text-[13px] font-bold">Analytics from this data</div>
-            <p className="mt-1 text-[12px] text-muted">Spending analytics and the AI's “what changed” answers are built from these rows.</p>
+            <p className="mt-1 text-[12px] text-muted">Spending analytics and the AI&apos;s “what changed” answers are built from these rows.</p>
             <div className="mt-3 flex flex-wrap gap-2"><Button size="sm" variant="secondary" href="/analytics/spending">Spending analytics</Button><Button size="sm" variant="secondary" href="/ai?q=What%20changed%20in%20my%20finances%20this%20month%3F">Ask AI</Button></div>
           </Card>
         </div>
@@ -118,7 +119,7 @@ export function TransactionsView({ currency: c, accounts, initial, initialQuery,
       </Drawer>
 
       <Drawer open={adding} onClose={() => setAdding(false)} title="Add transaction">
-        <TransactionForm embedded currency={c} accounts={accounts} onCreated={(t) => { setRows((r) => [t, ...r]); setHighlightId(t.id); setTimeout(() => setHighlightId(null), 1200); setAdding(false); }} />
+        <TransactionForm embedded currency={c} accounts={accounts} onCreated={(t) => { setOverrides((r) => [t, ...(r ?? initial)]); setHighlightId(t.id); setTimeout(() => setHighlightId(null), 1200); setAdding(false); }} />
       </Drawer>
 
       <ConfirmDialog open={!!confirmDelete} onClose={() => setConfirmDelete(null)} onConfirm={() => confirmDelete && remove(confirmDelete)} title="Delete transaction?" description="The linked account balance will be adjusted back. This can't be undone." confirmLabel="Delete" destructive />
@@ -136,6 +137,7 @@ export function TransactionForm({ currency, accounts, embedded = false, onCreate
 
   async function submit() {
     if (!form.description.trim() || form.amount <= 0) return setError("Add a description and an amount greater than zero.");
+    if (form.amount > MAX_TRANSACTION_AMOUNT) return setError(`Amount must be at most ${formatMoney(MAX_TRANSACTION_AMOUNT, currency)}.`);
     setError(null);
     setSaving(true);
     const r = await fetch("/api/transactions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
@@ -156,7 +158,7 @@ export function TransactionForm({ currency, accounts, embedded = false, onCreate
       <SegmentedControl layoutId={embedded ? "tx-form-type-embedded" : "tx-form-type"} value={form.type} onChange={(v) => setForm({ ...form, type: v, category: v === "income" ? "salary" : v === "transfer" ? "savings" : "food" })} options={[{ value: "expense", label: "Expense" }, { value: "income", label: "Income" }, { value: "transfer", label: "Transfer" }]} />
       <Field label="Description"><Input autoFocus value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Groceries, salary, rent…" /></Field>
       <div className="grid grid-cols-2 gap-3">
-        <Field label="Amount"><MoneyInput currency={currency} value={form.amount} onChange={(v) => setForm({ ...form, amount: v })} /></Field>
+        <Field label="Amount"><MoneyInput currency={currency} value={form.amount} max={MAX_TRANSACTION_AMOUNT} onChange={(v) => setForm({ ...form, amount: v })} /></Field>
         <Field label="Date"><Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></Field>
       </div>
       <div className="grid grid-cols-2 gap-3">

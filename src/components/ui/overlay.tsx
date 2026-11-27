@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useId, useRef, type ReactNode } from "react";
 import { DUR, EASE_IN, EASE_OUT } from "../motion/tokens";
 import { Button, IconButton } from "./button";
 
@@ -14,7 +14,11 @@ const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select
 export function useDialogBehavior(open: boolean, onClose: () => void) {
   const ref = useRef<HTMLDivElement>(null);
   const closeRef = useRef(onClose);
-  closeRef.current = onClose;
+
+  // Keep the latest callback without writing to a ref during render.
+  useEffect(() => {
+    closeRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     if (!open) return;
@@ -57,12 +61,13 @@ export function useDialogBehavior(open: boolean, onClose: () => void) {
 
 export function Drawer({ open, onClose, title, children, footer, width = 460 }: { open: boolean; onClose: () => void; title?: ReactNode; children: ReactNode; footer?: ReactNode; width?: number }) {
   const dialogRef = useDialogBehavior(open, onClose);
+  const titleId = useId();
   const enter = ENTER;
   const exit = EXIT;
   return (
     <AnimatePresence initial={false}>
       {open && (
-        <div ref={dialogRef} tabIndex={-1} className="fixed inset-0 z-[90]" role="dialog" aria-modal="true">
+        <div ref={dialogRef} tabIndex={-1} className="fixed inset-0 z-[90]" role="dialog" aria-modal="true" aria-labelledby={title ? titleId : undefined} aria-label={title ? undefined : "Dialog"}>
           <motion.div className="absolute inset-0 bg-ink-deep/30 backdrop-blur-[2px]" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: exit }} transition={enter} onClick={onClose} />
           <motion.aside
             className="motion-reveal absolute right-0 top-0 flex h-full w-full flex-col bg-card shadow-panel md:m-3 md:h-[calc(100%-24px)] md:rounded-[26px]"
@@ -73,7 +78,7 @@ export function Drawer({ open, onClose, title, children, footer, width = 460 }: 
             transition={enter}
           >
             <div className="flex items-center justify-between border-b border-line px-5 py-4">
-              <h2 className="text-[15px] font-bold tracking-tight">{title}</h2>
+              <h2 id={titleId} className="text-[15px] font-bold tracking-tight">{title}</h2>
               <IconButton label="Close" onClick={onClose}>
                 <X className="h-4 w-4" />
               </IconButton>
@@ -89,13 +94,14 @@ export function Drawer({ open, onClose, title, children, footer, width = 460 }: 
 
 export function Modal({ open, onClose, title, children, footer, size = "md" }: { open: boolean; onClose: () => void; title?: ReactNode; children: ReactNode; footer?: ReactNode; size?: "sm" | "md" | "lg" }) {
   const dialogRef = useDialogBehavior(open, onClose);
+  const titleId = useId();
   const enter = ENTER;
   const exit = EXIT;
   const w = size === "sm" ? "max-w-sm" : size === "lg" ? "max-w-3xl" : "max-w-lg";
   return (
     <AnimatePresence initial={false}>
       {open && (
-        <div ref={dialogRef} tabIndex={-1} className="fixed inset-0 z-[95] grid place-items-center p-4" role="dialog" aria-modal="true">
+        <div ref={dialogRef} tabIndex={-1} className="fixed inset-0 z-[95] grid place-items-center p-4" role="dialog" aria-modal="true" aria-labelledby={title ? titleId : undefined} aria-label={title ? undefined : "Dialog"}>
           <motion.div className="absolute inset-0 bg-ink-deep/40 backdrop-blur-[3px]" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: exit }} transition={enter} onClick={onClose} />
           <motion.div
             className={`motion-reveal relative w-full ${w} rounded-[24px] bg-card p-6 shadow-panel`}
@@ -104,7 +110,7 @@ export function Modal({ open, onClose, title, children, footer, size = "md" }: {
             exit={{ opacity: 0, scale: 0.97, y: 4, transition: exit }}
             transition={enter}
           >
-            {title && <h2 className="mb-3 text-[18px] font-extrabold tracking-tight">{title}</h2>}
+            {title && <h2 id={titleId} className="mb-3 text-[18px] font-extrabold tracking-tight">{title}</h2>}
             {children}
             {footer && <div className="mt-6 flex justify-end gap-2">{footer}</div>}
           </motion.div>

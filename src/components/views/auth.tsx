@@ -61,7 +61,7 @@ export function SignUpView() {
         <Button type="submit" className="w-full" size="lg" loading={loading} iconRight={<ArrowRight className="h-4 w-4" />}>Continue</Button>
         <div className="flex items-center gap-3 text-[11px] text-subtle"><span className="h-px flex-1 bg-line" />or<span className="h-px flex-1 bg-line" /></div>
         <Button type="button" variant="secondary" className="w-full" onClick={() => setError("Google sign-in isn't configured in this environment yet. Use email instead.")}>Continue with Google</Button>
-        <p className="text-center text-[11px] text-subtle">We'll send a verification email. Educational tool — not financial advice.</p>
+        <p className="text-center text-[11px] text-subtle">We&apos;ll send a verification email. Educational tool — not financial advice.</p>
       </form>
     </AuthShell>
   );

@@ -164,19 +164,20 @@ export function Donut({ segments, size = 160, stroke = 18, centerLabel, centerVa
   const total = Math.max(1, segments.reduce((s, x) => s + x.value, 0));
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
-  let offset = 0;
+  // Pure cumulative offsets: no variable reassignment inside the map callback
+  // (react-hooks/immutability). Segment counts are tiny, so slice/reduce is fine.
+  const arcs = segments.map((s) => ({ ...s, len: (s.value / total) * c }));
+  const withOffsets = arcs.map((s, i) => ({
+    ...s,
+    offset: arcs.slice(0, i).reduce((sum, a) => sum + a.len, 0),
+  }));
   return (
     <div className={`relative inline-grid place-items-center ${className}`} style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90" aria-hidden>
         <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--card-3)" strokeWidth={stroke} />
-        {segments.map((s, i) => {
-          const len = (s.value / total) * c;
-          const el = (
-            <motion.circle key={s.label} cx={size / 2} cy={size / 2} r={r} fill="none" stroke={s.color} strokeWidth={stroke} strokeDasharray={`${len} ${c - len}`} strokeDashoffset={-offset} initial={reduce ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: DUR.rare, ease: EASE_OUT, delay: DUR.leadIn + Math.min(i, 5) * 0.04 }} />
-          );
-          offset += len;
-          return el;
-        })}
+        {withOffsets.map((s, i) => (
+          <motion.circle key={s.label} cx={size / 2} cy={size / 2} r={r} fill="none" stroke={s.color} strokeWidth={stroke} strokeDasharray={`${s.len} ${c - s.len}`} strokeDashoffset={-s.offset} initial={reduce ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: DUR.rare, ease: EASE_OUT, delay: DUR.leadIn + Math.min(i, 5) * 0.04 }} />
+        ))}
       </svg>
       <div className="absolute inset-0 grid place-items-center text-center">
         <div>

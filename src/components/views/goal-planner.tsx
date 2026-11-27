@@ -13,6 +13,7 @@ import { FanChart } from "../charts/fan-chart";
 import { useToast } from "../motion/toast";
 import { formatMoney, formatPct, toISODate, addMonths } from "@/lib/format";
 import { requiredMonthly, goalFutureValue } from "@/lib/finance";
+import { APP_BOOT_TIME } from "@/lib/constants";
 import { runSimulation, type EconAssumptions, type SimTwin } from "@/lib/simulation";
 import type { GoalCardData } from "../domain/cards";
 
@@ -20,7 +21,7 @@ export function GoalPlannerView({ currency: c, goal, simTwin, econ }: { currency
   const router = useRouter();
   const { toast } = useToast();
   const [target, setTarget] = useState(goal.targetAmount);
-  const [months, setMonths] = useState(Math.max(6, Math.round((new Date(goal.targetDate).getTime() - Date.now()) / (30.44 * 86400000))));
+  const [months, setMonths] = useState(Math.max(6, Math.round((new Date(goal.targetDate).getTime() - APP_BOOT_TIME) / (30.44 * 86400000))));
   const [contribution, setContribution] = useState(goal.monthlyContribution);
   const [starting, setStarting] = useState(goal.currentAmount);
   const [saving, setSaving] = useState(false);

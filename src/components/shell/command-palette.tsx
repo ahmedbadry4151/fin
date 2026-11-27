@@ -34,21 +34,15 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
   const [active, setActive] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Reset-on-open is handled by a keyed remount in app-shell (no setState in effect).
   useEffect(() => {
-    if (open) {
-      setQ("");
-      setActive(0);
-      setTimeout(() => inputRef.current?.focus(), 30);
-    }
+    if (open) setTimeout(() => inputRef.current?.focus(), 30);
   }, [open]);
 
   useEffect(() => {
     if (!open) return;
     const term = q.trim();
-    if (term.length < 2) {
-      setResults([]);
-      return;
-    }
+    if (term.length < 2) return;
     const ctrl = new AbortController();
     const t = setTimeout(() => {
       fetch(`/api/search?q=${encodeURIComponent(term)}`, { signal: ctrl.signal })
@@ -65,7 +59,8 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
   const items: Item[] = useMemo(() => {
     const term = q.trim().toLowerCase();
     const cmds = COMMANDS.filter((c) => !term || c.label.toLowerCase().includes(term)).map((c) => ({ ...c, group: "Commands" }));
-    return [...results, ...cmds];
+    const found = term.length >= 2 ? results : [];
+    return [...found, ...cmds];
   }, [q, results]);
 
   const select = useCallback(
@@ -110,7 +105,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
           <motion.div className="relative w-full max-w-xl overflow-hidden rounded-[24px] bg-card shadow-panel" initial={{ opacity: 0, scale: 0.97, y: -6 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.98, y: -3, transition: exit }} transition={enter}>
             <div className="flex items-center gap-3 border-b border-line px-5 py-4">
               <Search className="h-4 w-4 text-muted" />
-              <input ref={inputRef} value={q} onChange={(e) => { setQ(e.target.value); setActive(0); }} placeholder="Search accounts, goals, scenarios, simulations… or run a command" className="flex-1 bg-transparent text-[14px] outline-none placeholder:text-subtle" />
+              <input ref={inputRef} aria-label="Search accounts, goals, scenarios and commands" value={q} onChange={(e) => { setQ(e.target.value); setActive(0); }} placeholder="Search accounts, goals, scenarios, simulations… or run a command" className="flex-1 bg-transparent text-[14px] outline-none placeholder:text-subtle" />
               <kbd className="pill border border-line px-2 py-0.5 text-[10px] font-semibold text-muted">ESC</kbd>
             </div>
             <div className="max-h-[50vh] overflow-y-auto p-2">

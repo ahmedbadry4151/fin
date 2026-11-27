@@ -95,6 +95,7 @@ export function Toggle({ checked, onChange, label, description, className }: { c
         type="button"
         role="switch"
         aria-checked={checked}
+        aria-label={typeof label === "string" ? label : undefined}
         onClick={() => onChange(!checked)}
         className={cn("relative h-6 w-11 shrink-0 pill transition-colors duration-200 focus-ring", checked ? "bg-ink" : "bg-card3")}
       >
@@ -115,6 +116,7 @@ export function Checkbox({ checked, onChange, label, className }: { checked: boo
         type="button"
         role="checkbox"
         aria-checked={checked}
+        aria-label={typeof label === "string" ? label : undefined}
         onClick={() => onChange(!checked)}
         className={cn("grid h-5 w-5 place-items-center rounded-[7px] border transition-colors focus-ring", checked ? "bg-ink border-ink text-ink-fg" : "bg-card border-line-strong")}
       >

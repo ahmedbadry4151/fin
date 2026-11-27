@@ -46,7 +46,7 @@ export function AccountsView({ currency: c, accounts, metrics: m, months }: { cu
               <Card className="h-full">
                 <CardTitle>Cash flow · 6 months</CardTitle>
                 <GroupedBars currency={c} height={180} groups={months.map((mo) => ({ label: mo.label, values: [{ key: "Income", value: mo.income, tone: "ink" }, { key: "Expenses", value: mo.expense, tone: "accent" }] }))} />
-                <p className="mt-3 text-[11.5px] text-muted">Based on recorded transactions. The Twin's modelled budget may differ.</p>
+                <p className="mt-3 text-[11.5px] text-muted">Based on recorded transactions. The Twin&apos;s modelled budget may differ.</p>
               </Card>
             </StaggerItem>
           </div>

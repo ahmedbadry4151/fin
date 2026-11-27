@@ -1,13 +1,32 @@
 "use client";
 
-import type { ReactNode } from "react";
-import { AlertTriangle, RefreshCw } from "lucide-react";
-import { icons, type LucideProps } from "lucide-react";
+import type { ComponentType, ReactNode } from "react";
+import {
+  Activity, AlertTriangle, ArrowDownLeft, ArrowLeftRight, Banknote, Bell, Briefcase,
+  Building2, CalendarRange, Camera, Car, Circle, Clapperboard, Clock, CloudRain,
+  Compass, CreditCard, FastForward, FileText, Fingerprint, Flame, Fuel, GitBranch,
+  GraduationCap, Heart, HeartPulse, Home, Landmark, Laptop, MapPin, Minus, PiggyBank,
+  Plane, Receipt, RefreshCw, Repeat, Rocket, Scissors, ShieldCheck, ShoppingBag,
+  SlidersHorizontal, Smartphone, Sparkles, Sunset, Target, TrendingDown, TrendingUp,
+  Unlink, Users, UtensilsCrossed, Wallet, Zap, type LucideProps,
+} from "lucide-react";
 import { cn, Button } from "./button";
 import { initials } from "@/lib/format";
 
+// Static registry: importing the whole `icons` object defeats tree-shaking and
+// drags the entire Lucide set into every bundle that renders an Icon.
+const ICONS: Record<string, ComponentType<LucideProps>> = {
+  Activity, ArrowDownLeft, ArrowLeftRight, Banknote, Bell, Briefcase, Building2,
+  CalendarRange, Camera, Car, Clapperboard, Clock, CloudRain, Compass, CreditCard,
+  FastForward, FileText, Fingerprint, Flame, Fuel, GitBranch, GraduationCap, Heart,
+  HeartPulse, Home, Landmark, Laptop, MapPin, Minus, PiggyBank, Plane, Receipt,
+  RefreshCw, Repeat, Rocket, Scissors, ShieldCheck, ShoppingBag, SlidersHorizontal,
+  Smartphone, Sparkles, Sunset, Target, TrendingDown, TrendingUp, Unlink, Users,
+  UtensilsCrossed, Wallet, Zap,
+};
+
 export function Icon({ name, className, strokeWidth = 1.5, ...rest }: { name: string } & LucideProps) {
-  const Cmp = (icons as Record<string, React.ComponentType<LucideProps>>)[name] ?? icons.Circle;
+  const Cmp = ICONS[name] ?? Circle;
   return <Cmp className={className} strokeWidth={strokeWidth} {...rest} />;
 }
 

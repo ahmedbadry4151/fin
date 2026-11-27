@@ -95,8 +95,6 @@ export function AppShell({ user, unread, children }: { user: ShellUser; unread: 
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  useEffect(() => setMoreOpen(false), [pathname]);
-
   return (
     <CurrencyProvider currency={user.currency}>
       <div className="min-h-screen bg-page">
@@ -223,7 +221,7 @@ export function AppShell({ user, unread, children }: { user: ShellUser; unread: 
                     { href: "/settings", label: "Settings", icon: "Settings" },
                   ].map((it) => (
                     <li key={it.href}>
-                      <Link href={it.href} className="flex items-center gap-3 py-3 text-[14px] font-semibold">
+                      <Link href={it.href} onClick={() => setMoreOpen(false)} className="flex items-center gap-3 py-3 text-[14px] font-semibold">
                         <span className="grid h-8 w-8 place-items-center pill bg-card3">
                           <Icon name={it.icon} className="h-4 w-4" />
                         </span>
@@ -238,7 +236,7 @@ export function AppShell({ user, unread, children }: { user: ShellUser; unread: 
           )}
         </AnimatePresence>
 
-        <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
+        <CommandPalette key={paletteOpen ? "open" : "closed"} open={paletteOpen} onClose={() => setPaletteOpen(false)} />
       </div>
     </CurrencyProvider>
   );

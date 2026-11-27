@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import type { ReactNode } from "react";
+import { useRef, type KeyboardEvent, type ReactNode } from "react";
 import { cn } from "./button";
 import { SPRING } from "../motion/tokens";
 
@@ -62,15 +62,28 @@ export function SegmentedControl<T extends string>({
   className?: string;
   dark?: boolean;
 }) {
+  const refs = useRef<(HTMLButtonElement | null)[]>([]);
+  function onKeyDown(e: KeyboardEvent<HTMLButtonElement>, index: number) {
+    if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+    e.preventDefault();
+    const next = e.key === "ArrowRight"
+      ? (index + 1) % options.length
+      : (index - 1 + options.length) % options.length;
+    onChange(options[next].value);
+    refs.current[next]?.focus();
+  }
   return (
-    <div role="tablist" className={cn("inline-flex items-center gap-1 pill bg-card2 p-1 border border-line", className)}>
-      {options.map((o) => {
+    <div role="tablist" aria-label="Options" className={cn("inline-flex items-center gap-1 pill bg-card2 p-1 border border-line", className)}>
+      {options.map((o, index) => {
         const active = o.value === value;
         return (
           <button
             key={o.value}
+            ref={(el) => { refs.current[index] = el; }}
             role="tab"
             aria-selected={active}
+            tabIndex={active ? 0 : -1}
+            onKeyDown={(e) => onKeyDown(e, index)}
             onClick={() => onChange(o.value)}
             className={cn(
               "relative pill font-semibold transition-colors focus-ring whitespace-nowrap",

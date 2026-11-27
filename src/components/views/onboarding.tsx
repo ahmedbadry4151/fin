@@ -19,6 +19,7 @@ import { formatMoney, formatPct, toISODate, addMonths } from "@/lib/format";
 import { CURRENCIES, EMPLOYMENT_TYPES, EXPENSE_CATEGORIES, ASSET_TYPES, LIABILITY_TYPES, GOAL_TYPES, splitExpenses } from "@/lib/finance";
 import { ASSUMPTION_DEFS, DEFAULT_ASSUMPTIONS, PLANNING_STYLES } from "@/lib/economy";
 import { GOAL_ICON } from "../domain/cards";
+import { DEFAULT_UNSURE_MONTHLY_INCOME } from "@/lib/constants";
 
 const STEPS = ["Welcome", "Profile", "Employment", "Income", "Expenses", "Savings", "Assets", "Liabilities", "Goals", "Preferences", "Assumptions", "Review"];
 
@@ -49,10 +50,6 @@ export function OnboardingWizard({ initialName, initialCurrency }: { initialName
   const totalAssets = assets.reduce((s, a) => s + a.value, 0) + savings.cashSavings + savings.emergencySavings + savings.otherLiquid;
   const totalDebt = liabs.reduce((s, l) => s + l.balance, 0);
   const debtPayments = liabs.reduce((s, l) => s + l.monthlyPayment, 0);
-
-  useEffect(() => {
-    if (income.unsure && income.monthlyIncome === 0) setIncome((i) => ({ ...i, monthlyIncome: 25000 }));
-  }, [income.unsure, income.monthlyIncome]);
 
   const go = (n: number) => {
     setDir(n > step ? 1 : -1);
@@ -91,7 +88,7 @@ export function OnboardingWizard({ initialName, initialCurrency }: { initialName
             {step === 0 && (
               <section className="text-center">
                 <motion.span className="mx-auto grid h-16 w-16 place-items-center pill bg-ink" initial={{ scale: 0.8 }} animate={{ scale: 1 }} transition={SPRING.soft}><span className="h-7 w-7 pill border-[3px] border-accent" /></motion.span>
-                <h1 className="mt-6 text-[36px] md:text-[44px] font-extrabold tracking-tight leading-[1.05]">Let's build your financial twin.</h1>
+                <h1 className="mt-6 text-[36px] md:text-[44px] font-extrabold tracking-tight leading-[1.05]">Let&apos;s build your financial twin.</h1>
                 <p className="mx-auto mt-3 max-w-md text-[14.5px] text-muted">A few details are enough to create your starting model. Everything can be changed later.</p>
                 <div className="mx-auto mt-8 grid max-w-lg gap-3 sm:grid-cols-3">
                   {[{ icon: Clock, t: "About 6 minutes", d: "Skip anything you don't know" }, { icon: ShieldCheck, t: "Private by default", d: "Your data stays in your account" }, { icon: Info, t: "Educational model", d: "Not financial advice" }].map((x) => <div key={x.t} className="card p-4 text-left"><x.icon className="h-4.5 w-4.5 text-ink" strokeWidth={1.5} /><div className="mt-2 text-[13px] font-bold">{x.t}</div><div className="text-[11.5px] text-muted">{x.d}</div></div>)}
@@ -122,7 +119,7 @@ export function OnboardingWizard({ initialName, initialCurrency }: { initialName
                   <Field label="Income frequency"><Select value={income.incomeFrequency} onChange={(e) => setIncome({ ...income, incomeFrequency: e.target.value })}><option value="monthly">Monthly</option><option value="biweekly">Every two weeks</option><option value="irregular">Irregular</option></Select></Field>
                   <Slider label="Expected annual income growth" min={0} max={0.3} step={0.005} value={income.incomeGrowth} onChange={(v) => setIncome({ ...income, incomeGrowth: v })} display={formatPct(income.incomeGrowth, 1)} />
                 </div>
-                <button onClick={() => setIncome({ ...income, unsure: !income.unsure })} className={`mt-4 pill border px-3.5 py-1.5 text-[12.5px] font-semibold ${income.unsure ? "border-ink bg-ink text-ink-fg" : "border-line bg-card text-muted"}`}>I'm not sure {income.unsure && "· using EGP 25,000 as a starting assumption"}</button>
+                <button onClick={() => setIncome((i) => i.unsure ? { ...i, unsure: false } : { ...i, unsure: true, monthlyIncome: i.monthlyIncome || DEFAULT_UNSURE_MONTHLY_INCOME })} className={`mt-4 pill border px-3.5 py-1.5 text-[12.5px] font-semibold ${income.unsure ? "border-ink bg-ink text-ink-fg" : "border-line bg-card text-muted"}`}>I&apos;m not sure {income.unsure && `· using ${formatMoney(DEFAULT_UNSURE_MONTHLY_INCOME, c)} as a starting assumption`}</button>
               </Section>
             )}
             {step === 4 && (

@@ -80,7 +80,7 @@ export function AiView({ currency: c, userName, metrics: m, emergencySavings, go
                 <div className="grid place-items-center py-10 text-center">
                   <span className="grid h-12 w-12 place-items-center pill bg-ink text-accent"><Sparkles className="h-5 w-5" /></span>
                   <div className="mt-4 text-[16px] font-bold">What would you like to understand?</div>
-                  <p className="mt-1 max-w-sm text-[12.5px] text-muted">Ask about coverage, goals, a decision you're weighing, or which assumptions matter most.</p>
+                  <p className="mt-1 max-w-sm text-[12.5px] text-muted">Ask about coverage, goals, a decision you&apos;re weighing, or which assumptions matter most.</p>
                 </div>
               )}
               <AnimatePresence initial={false}>
