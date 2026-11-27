@@ -68,8 +68,10 @@ export function PublicNav() {
         <nav className="hidden items-center gap-1 lg:flex">{LINKS.map((l) => <Link key={l.href} href={l.href} className="pill px-3.5 py-1.5 text-[13px] font-semibold text-muted transition-colors hover:bg-card2 hover:text-ink">{l.label}</Link>)}</nav>
         <div className="flex items-center gap-2">
           <button onClick={toggle} className="grid h-9 w-9 place-items-center pill text-muted hover:bg-card2 hover:text-ink" aria-label="Toggle theme">{theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}</button>
-          <Button href="/login" variant="ghost" size="sm" className="hidden sm:inline-flex">Log in</Button>
-          <Button href="/signup" size="sm" className="hidden sm:inline-flex">Build My Financial Twin</Button>
+          <div className="hidden items-center gap-2 sm:flex">
+            <Button href="/login" variant="ghost" size="sm">Log in</Button>
+            <Button href="/signup" size="sm">Build My Financial Twin</Button>
+          </div>
           <button onClick={() => setOpen(!open)} className="grid h-9 w-9 place-items-center pill lg:hidden" aria-label="Menu">{open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}</button>
         </div>
       </div>
@@ -126,7 +128,7 @@ export function HeroSimulation({ autoplay = true }: { autoplay?: boolean }) {
         <div className="mb-1 flex items-center justify-between text-[12px] leading-[1.4]"><span className="font-semibold">10-year projection</span><span className="micro-copy tnum">Median {formatMoney(active.final.p50, "EGP", { compact: true })} · 5th–95th {formatMoney(active.final.p5, "", { compact: true })}–{formatMoney(active.final.p95, "", { compact: true })}</span></div>
         <AnimatePresence mode="wait">
           {phase >= 1 && <motion.div key={phase} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: { duration: DUR.exit, ease: EASE_IN } }} transition={{ duration: DUR.modal }}><FanChart series={active.series} baseline={phase === 2 ? baseline.series.p50 : null} currency="EGP" height={190} compact showLegend={false} /></motion.div>}
-          {phase === 0 && <motion.div key="empty" className="hatch h-[190px] rounded-2xl border border-line" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: { duration: DUR.exit, ease: EASE_IN } }} />}
+          {phase === 0 && <motion.div key="empty" className="hatch grid h-[190px] place-items-center rounded-2xl border border-line" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: { duration: DUR.exit, ease: EASE_IN } }}><span className="label">Computing {baseline.paths.toLocaleString()} paths…</span></motion.div>}
         </AnimatePresence>
       </div>
       <div className="micro-copy mt-3 flex items-center justify-between"><span>{baseline.paths.toLocaleString()} simulated paths · hatched = uncertainty range</span><span className="inline-flex gap-1">{[0, 1, 2].map((i) => <span key={i} className={`twin-dot h-1.5 w-1.5 pill ${phase === i ? "is-active" : ""}`} />)}</span></div>
