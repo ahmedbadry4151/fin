@@ -2,9 +2,15 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { useRef, type KeyboardEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { cn } from "./button";
 import { SPRING } from "../motion/tokens";
+
+// Route-link tab bars unmount before the next page mounts, so a shared layoutId
+// cannot animate between them. Remember the active tab's centre per bar and
+// slide the incoming indicator from that position instead.
+const lastTabCentre = new Map<string, number>();
+const useIsoLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
 export type Tone = "neutral" | "accent" | "good" | "warn" | "bad" | "ink";
 
@@ -105,13 +111,46 @@ export function SegmentedControl<T extends string>({
 
 /** Link-based tabs sharing an indicator (for sub-pages). */
 export function PillTabs({ items, current, layoutId, className }: { items: { href: string; label: string }[]; current: string; layoutId: string; className?: string }) {
+  const navRef = useRef<HTMLElement>(null);
+  const linkRefs = useRef<(HTMLAnchorElement | null)[]>([]);
+  const consumed = useRef(false);
+  const [slideFrom, setSlideFrom] = useState<number | null>(null);
+  const registryKey = `${layoutId}|${items.map((i) => i.href).join("|")}`;
+
+  const centre = useCallback((el: HTMLElement | null) => {
+    if (!el || !navRef.current) return 0;
+    const r = el.getBoundingClientRect();
+    const nr = navRef.current.getBoundingClientRect();
+    return r.left + r.width / 2 - nr.left;
+  }, []);
+
+  useIsoLayoutEffect(() => {
+    if (consumed.current) return;
+    consumed.current = true;
+    const index = items.findIndex((it) => it.href === current);
+    const previous = lastTabCentre.get(registryKey);
+    if (index >= 0 && previous !== undefined) {
+      setSlideFrom(previous - centre(linkRefs.current[index]));
+      lastTabCentre.delete(registryKey);
+    } else setSlideFrom(null);
+  }, [registryKey, current, centre, items]);
+
   return (
-    <nav className={cn("inline-flex items-center gap-1 pill bg-card2 p-1 border border-line overflow-x-auto no-scrollbar max-w-full", className)} aria-label="Sections">
-      {items.map((it) => {
+    <nav ref={navRef} className={cn("inline-flex items-center gap-1 pill bg-card2 p-1 border border-line overflow-x-auto no-scrollbar max-w-full", className)} aria-label="Sections">
+      {items.map((it, index) => {
         const active = it.href === current;
         return (
-          <Link key={it.href} href={it.href} className={cn("relative pill px-3.5 py-1.5 text-[12.5px] font-semibold whitespace-nowrap focus-ring transition-colors", active ? "text-ink-fg" : "text-muted hover:text-ink")}>
-            {active && <motion.span layoutId={layoutId} className="absolute inset-0 pill bg-ink shadow-card" transition={SPRING.pill} />}
+          <Link
+            key={it.href}
+            ref={(el) => { linkRefs.current[index] = el; }}
+            href={it.href}
+            onClick={() => {
+              const activeIndex = items.findIndex((x) => x.href === current);
+              if (activeIndex >= 0) lastTabCentre.set(registryKey, centre(linkRefs.current[activeIndex]));
+            }}
+            className={cn("relative pill px-3.5 py-1.5 text-[12.5px] font-semibold whitespace-nowrap focus-ring transition-colors", active ? "text-ink-fg" : "text-muted hover:text-ink")}
+          >
+            {active && <motion.span key={slideFrom ?? 0} initial={{ x: slideFrom ?? 0 }} animate={{ x: 0 }} transition={SPRING.pill} className="absolute inset-0 pill bg-ink shadow-card" />}
             <span className="relative z-10">{it.label}</span>
           </Link>
         );
