@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Bell, Search, Moon, Sun, LayoutGrid, Fingerprint, Target, Sparkles, Menu, Plus, X, ChevronRight, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { Icon, Avatar } from "../ui/states";
 import { useTheme, CurrencyProvider } from "../providers";
@@ -83,6 +83,8 @@ export function AppShell({ user, unread, accounts, children }: { user: ShellUser
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  const hideSidebarRef = useRef<HTMLButtonElement>(null);
+  const showSidebarRef = useRef<HTMLButtonElement>(null);
   const enter = PAGE;
   const exit = PAGE_EXIT;
   const mobileNavRef = useDialogBehavior(moreOpen, () => setMoreOpen(false));
@@ -109,8 +111,16 @@ export function AppShell({ user, unread, accounts, children }: { user: ShellUser
           aria-hidden={!sidebarOpen}
           className={`fixed inset-y-0 left-0 z-40 hidden w-[232px] flex-col border-r border-line bg-canvas px-3 py-4 lg:flex no-print ${sidebarOpen ? "" : "pointer-events-none"}`}
         >
-          <div className="px-2">
+          <div className="flex items-center justify-between gap-2 px-2">
             <Logo />
+            <button
+              ref={hideSidebarRef}
+              onClick={() => { setSidebarOpen(false); requestAnimationFrame(() => showSidebarRef.current?.focus()); }}
+              className="grid h-9 w-9 shrink-0 place-items-center pill text-muted hover:text-ink hover:bg-card2 focus-ring"
+              aria-label="Hide sidebar"
+            >
+              <PanelLeftClose className="h-4 w-4" />
+            </button>
           </div>
           <nav className="mt-6 flex-1 space-y-5 overflow-y-auto no-scrollbar pb-4" aria-label="Primary">
             {NAV.map((g) => (
@@ -149,9 +159,16 @@ export function AppShell({ user, unread, accounts, children }: { user: ShellUser
 
         {/* Header */}
         <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-line bg-page/80 px-4 backdrop-blur-md lg:ml-[var(--sidebar-w)] lg:px-7 lg:transition-[margin-left] lg:duration-[420ms] lg:ease-out no-print">
-          <button onClick={() => setSidebarOpen((o) => !o)} className="hidden h-9 w-9 place-items-center pill text-muted hover:text-ink hover:bg-card2 focus-ring lg:grid" aria-label={sidebarOpen ? "Hide sidebar" : "Show sidebar"}>
-            {sidebarOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}
-          </button>
+          {!sidebarOpen && (
+            <button
+              ref={showSidebarRef}
+              onClick={() => { setSidebarOpen(true); requestAnimationFrame(() => hideSidebarRef.current?.focus()); }}
+              className="hidden h-9 w-9 place-items-center pill text-muted hover:text-ink hover:bg-card2 focus-ring lg:grid"
+              aria-label="Show sidebar"
+            >
+              <PanelLeftOpen className="h-4 w-4" />
+            </button>
+          )}
           <div className="lg:hidden">
             <Logo />
           </div>
