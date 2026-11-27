@@ -15,7 +15,7 @@ import { FanChart } from "../charts/fan-chart";
 import { HBars } from "../charts/charts";
 import { ProgressBar } from "../motion/progress";
 import { Stagger, StaggerItem } from "../motion/stagger";
-import { DUR, EASE_IN, EASE_OUT, SPRING, STEP } from "../motion/tokens";
+import { PAGE, PAGE_EXIT, SPRING, STEP } from "../motion/tokens";
 import { useToast } from "../motion/toast";
 import { exportReport } from "@/lib/client-api";
 import { formatMoney, formatPct, formatMonths, formatDate } from "@/lib/format";
@@ -96,7 +96,7 @@ export function ReportBuilder({ scenarios, goals, simulations }: { scenarios: { 
         ))}
       </ol>
       <AnimatePresence mode="wait">
-        <motion.div key={step} initial={STEP.enter} animate={STEP.show} exit={{ ...STEP.exit, transition: { duration: DUR.exit, ease: EASE_IN } }} transition={{ duration: DUR.modal, ease: EASE_OUT }}>
+        <motion.div key={step} initial={STEP.enter} animate={STEP.show} exit={{ ...STEP.exit, transition: PAGE_EXIT }} transition={PAGE}>
           <Card className="space-y-4">
             {step === 0 && <div className="grid gap-2 sm:grid-cols-2">{TYPES.map((t) => <OptionCard key={t.key} selected={cfg.type === t.key} onClick={() => setCfg({ ...cfg, type: t.key })} title={t.label} hint={t.hint} icon={<Icon name={REPORT_ICON[t.key]} className="h-4 w-4" />} />)}</div>}
             {step === 1 && <Field label="Date range"><Select value={cfg.range} onChange={(e) => setCfg({ ...cfg, range: e.target.value })}><option value="month">This month</option><option value="quarter">Last 3 months</option><option value="half">Last 6 months</option><option value="year">Last 12 months</option></Select></Field>}

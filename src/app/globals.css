@@ -46,7 +46,8 @@
   --t-press: 180ms;
   --t-tooltip: 140ms;
   --t-fast: 200ms;
-  --t-base: 300ms;
+  --t-page: 420ms;
+  --t-base: var(--t-page);
   --t-medium: 460ms;
   --t-slow: 500ms;
   --ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -405,6 +406,17 @@ textarea {
   transition-property: background-color, border-color, color, box-shadow;
   transition-duration: var(--t-fast);
   transition-timing-function: var(--ease-out);
+}
+
+/* Native number spinners are replaced by accent-themed steppers in MoneyInput. */
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 input[type="range"] {

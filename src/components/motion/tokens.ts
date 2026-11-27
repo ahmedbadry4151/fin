@@ -28,6 +28,11 @@ export const EASE_OUT = [0.25, 0.46, 0.45, 0.94] as const;
 export const EASE_IN = [0.4, 0, 0.8, 0.4] as const;
 export const EASE_IN_OUT = [0.4, 0, 0.2, 1] as const;
 
+// Every enter/exit transition (route, drawer, modal, palette, sheet) shares
+// the page-transition feel; micro press feedback keeps its own SPRING tokens.
+export const PAGE = { duration: DUR.page, ease: EASE_OUT } as const;
+export const PAGE_EXIT = { duration: DUR.exit, ease: EASE_IN } as const;
+
 // Springs with visible but controlled travel (underdamped, no jitter).
 export const SPRING = {
   pill: { type: "spring", stiffness: 280, damping: 28 },

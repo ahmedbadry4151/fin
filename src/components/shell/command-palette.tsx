@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Search, CornerDownLeft } from "lucide-react";
 import { Icon } from "../ui/states";
 import { useTheme } from "../providers";
-import { DUR, EASE_IN, EASE_OUT } from "../motion/tokens";
+import { DUR, EASE_OUT, PAGE, PAGE_EXIT } from "../motion/tokens";
 
 type Item = { id: string; label: string; hint?: string; icon: string; group: string; href?: string; run?: () => void };
 
@@ -27,8 +27,8 @@ const COMMANDS: Omit<Item, "group">[] = [
 export function CommandPalette({ open, onClose }: { open: boolean; onClose: () => void }) {
   const router = useRouter();
   const { toggle } = useTheme();
-  const enter = { duration: DUR.popover, ease: EASE_OUT };
-  const exit = { duration: DUR.exit, ease: EASE_IN };
+  const enter = PAGE;
+  const exit = PAGE_EXIT;
   const [q, setQ] = useState("");
   const [results, setResults] = useState<Item[]>([]);
   const [active, setActive] = useState(0);

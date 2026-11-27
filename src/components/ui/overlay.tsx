@@ -3,11 +3,11 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 import { useEffect, useId, useRef, type ReactNode } from "react";
-import { DUR, EASE_IN, EASE_OUT } from "../motion/tokens";
+import { PAGE, PAGE_EXIT } from "../motion/tokens";
 import { Button, IconButton } from "./button";
 
-const ENTER = { duration: DUR.modal, ease: EASE_OUT };
-const EXIT = { duration: DUR.exit, ease: EASE_IN };
+const ENTER = PAGE;
+const EXIT = PAGE_EXIT;
 
 const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 

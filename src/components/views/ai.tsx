@@ -11,7 +11,7 @@ import { StatusBadge } from "../ui/pill";
 import { Collapse } from "../motion/primitives";
 import { Skeleton, Avatar } from "../ui/states";
 import { HBars } from "../charts/charts";
-import { DUR, EASE_OUT } from "../motion/tokens";
+import { DUR, EASE_OUT, PAGE } from "../motion/tokens";
 import { formatMoney, formatMonths, formatPct } from "@/lib/format";
 import { SUGGESTED_QUESTIONS, type AiAnswer } from "@/lib/intelligence";
 import type { TwinMetrics } from "@/lib/finance";
@@ -85,7 +85,7 @@ export function AiView({ currency: c, userName, metrics: m, emergencySavings, go
               )}
               <AnimatePresence initial={false}>
                 {messages.map((msg) => (
-                  <motion.div key={msg.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: DUR.modal, ease: EASE_OUT }} className={`flex gap-3 ${msg.role === "user" ? "justify-end" : ""}`}>
+                  <motion.div key={msg.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={PAGE} className={`flex gap-3 ${msg.role === "user" ? "justify-end" : ""}`}>
                     {msg.role === "assistant" && <span className="mt-1 grid h-8 w-8 shrink-0 place-items-center pill bg-ink text-accent"><Sparkles className="h-4 w-4" /></span>}
                     <div className={`max-w-[85%] ${msg.role === "user" ? "pill bg-ink px-4 py-2.5 text-[13.5px] font-medium text-ink-fg" : "w-full"}`}>
                       {msg.role === "user" ? msg.content : <AssistantMessage msg={msg} c={c} onFollowUp={ask} />}

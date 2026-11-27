@@ -13,7 +13,7 @@ import { Icon } from "../ui/states";
 import { AnimatedNumber, useCountUp } from "../motion/count-up";
 import { InfoTip } from "../motion/primitives";
 import { CircularProgress } from "../motion/progress";
-import { DUR, EASE_IN, EASE_IN_OUT, EASE_OUT, SPRING } from "../motion/tokens";
+import { DUR, EASE_IN, EASE_IN_OUT, EASE_OUT, PAGE, PAGE_EXIT, SPRING } from "../motion/tokens";
 import { useTheme } from "../providers";
 import { formatMoney, formatPct, toISODate, addMonths } from "@/lib/format";
 import { CURRENCIES, EMPLOYMENT_TYPES, EXPENSE_CATEGORIES, ASSET_TYPES, LIABILITY_TYPES, GOAL_TYPES, splitExpenses } from "@/lib/finance";
@@ -84,7 +84,7 @@ export function OnboardingWizard({ initialName, initialCurrency }: { initialName
 
       <main className="mx-auto max-w-3xl px-4 py-8 pb-28">
         <AnimatePresence mode="wait" custom={dir}>
-          <motion.div key={step} custom={dir} initial={{ opacity: 0, x: dir * 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: dir * -12, transition: { duration: DUR.exit, ease: EASE_IN } }} transition={{ duration: DUR.page, ease: EASE_OUT }}>
+          <motion.div key={step} custom={dir} initial={{ opacity: 0, x: dir * 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: dir * -12, transition: PAGE_EXIT }} transition={PAGE}>
             {step === 0 && (
               <section className="text-center">
                 <motion.span className="mx-auto grid h-16 w-16 place-items-center pill bg-ink" initial={{ scale: 0.8 }} animate={{ scale: 1 }} transition={SPRING.soft}><span className="h-7 w-7 pill border-[3px] border-accent" /></motion.span>

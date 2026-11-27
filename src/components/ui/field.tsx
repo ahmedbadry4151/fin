@@ -1,8 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Check } from "lucide-react";
-import { forwardRef, useId, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from "react";
+import { Check, ChevronDown, ChevronUp } from "lucide-react";
+import { Children, forwardRef, Fragment, isValidElement, useEffect, useId, useRef, useState, type ChangeEvent, type InputHTMLAttributes, type KeyboardEvent, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from "react";
 import { cn } from "./button";
 import { DUR, SPRING } from "../motion/tokens";
 
@@ -24,39 +24,149 @@ export function Field({ label, hint, error, children, className, right }: { labe
 const inputBase =
   "w-full rounded-2xl border border-line bg-card px-4 text-[14px] font-medium text-ink placeholder:text-subtle outline-none transition-[border-color,box-shadow] duration-200 focus:border-accent focus:shadow-[0_0_0_3px_var(--accent-soft)] disabled:opacity-60";
 
-export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement> & { prefix?: string; suffix?: string }>(function Input({ className, prefix, suffix, ...rest }, ref) {
+export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement> & { prefix?: string; suffix?: ReactNode }>(function Input({ className, prefix, suffix, ...rest }, ref) {
   if (prefix || suffix) {
     return (
       <div className="relative">
         {prefix && <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[12px] font-semibold text-muted">{prefix}</span>}
-        <input ref={ref} className={cn(inputBase, "h-11 tnum", prefix && "pl-14", suffix && "pr-14", className)} {...rest} />
-        {suffix && <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[12px] font-semibold text-muted">{suffix}</span>}
+        <input ref={ref} className={cn(inputBase, "h-11 tnum", prefix ? "pl-14" : undefined, suffix ? "pr-14" : undefined, className)} {...rest} />
+        {suffix && <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[12px] font-semibold text-muted">{suffix}</span>}
       </div>
     );
   }
   return <input ref={ref} className={cn(inputBase, "h-11", className)} {...rest} />;
 });
 
-export function MoneyInput({ value, onChange, currency = "EGP", className, ...rest }: Omit<InputHTMLAttributes<HTMLInputElement>, "value" | "onChange"> & { value: number; onChange: (n: number) => void; currency?: string }) {
+export function MoneyInput({ value, onChange, currency = "EGP", className, min = 0, max, step = 1, ...rest }: Omit<InputHTMLAttributes<HTMLInputElement>, "value" | "onChange"> & { value: number; onChange: (n: number) => void; currency?: string }) {
+  const lo = Number(min);
+  const hi = max === undefined ? Number.POSITIVE_INFINITY : Number(max);
+  const delta = Number(step) || 1;
+  const stepBy = (dir: number) => {
+    const next = Math.min(hi, Math.max(lo, value + dir * delta));
+    onChange(Number.isFinite(next) ? next : 0);
+  };
+  const steppers = (
+    <span className="flex flex-col gap-0.5">
+      <button type="button" aria-label="Increase amount" disabled={value >= hi} onClick={() => stepBy(1)} className="grid h-4 w-5 place-items-center rounded-t-lg text-accent hover:text-ink focus-ring disabled:opacity-40"><ChevronUp className="h-3 w-3" strokeWidth={2.5} /></button>
+      <button type="button" aria-label="Decrease amount" disabled={value <= lo} onClick={() => stepBy(-1)} className="grid h-4 w-5 place-items-center rounded-b-lg text-accent hover:text-ink focus-ring disabled:opacity-40"><ChevronDown className="h-3 w-3" strokeWidth={2.5} /></button>
+    </span>
+  );
   return (
     <Input
       type="number"
       inputMode="decimal"
       prefix={currency}
+      suffix={steppers}
       value={Number.isFinite(value) ? value : ""}
       onChange={(e) => onChange(e.target.value === "" ? 0 : Number(e.target.value))}
       className={className}
-      min={0}
+      min={min}
+      max={max}
+      step={step}
       {...rest}
     />
   );
 }
 
-export function Select({ className, children, ...rest }: SelectHTMLAttributes<HTMLSelectElement>) {
+type SelectItem = { value: string; label: string };
+
+/** Flattens fragments and concatenates text children so option labels never stringify React elements. */
+function collectOptions(nodes: ReactNode): SelectItem[] {
+  const out: SelectItem[] = [];
+  Children.forEach(nodes, (node) => {
+    if (node === null || node === undefined || typeof node === "boolean") return;
+    if (isValidElement<{ children?: ReactNode }>(node)) {
+      if (node.type === Fragment) {
+        out.push(...collectOptions(node.props.children));
+        return;
+      }
+      const props = node.props as { value?: string | number; children?: ReactNode };
+      const label = Children.toArray(props.children).map((c) => (typeof c === "string" || typeof c === "number" ? String(c) : "")).join("");
+      out.push({ value: String(props.value ?? label ?? ""), label });
+      return;
+    }
+    if (out.length) out[out.length - 1].label += String(node);
+  });
+  return out;
+}
+
+export function Select({ className, children, value, onChange, disabled, ...rest }: SelectHTMLAttributes<HTMLSelectElement>) {
+  const items = collectOptions(children);
+  const [open, setOpen] = useState(false);
+  const [active, setActive] = useState(0);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const listId = useId();
+  const current = String(value ?? "");
+  const selected = items.find((it) => it.value === current);
+
+  useEffect(() => {
+    if (!open) return;
+    const onPointer = (e: PointerEvent) => {
+      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("pointerdown", onPointer);
+    return () => document.removeEventListener("pointerdown", onPointer);
+  }, [open]);
+
+  const openAt = () => {
+    setOpen(true);
+    setActive(Math.max(0, items.findIndex((it) => it.value === current)));
+  };
+  const commit = (it: SelectItem) => {
+    setOpen(false);
+    triggerRef.current?.focus();
+    onChange?.({ target: { value: it.value } } as unknown as ChangeEvent<HTMLSelectElement>);
+  };
+  const onKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {
+    if (disabled || !items.length) return;
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+      if (!open) return openAt();
+      setActive((a) => (e.key === "ArrowDown" ? Math.min(items.length - 1, a + 1) : Math.max(0, a - 1)));
+    } else if (e.key === "Home" || e.key === "End") {
+      e.preventDefault();
+      setActive(e.key === "Home" ? 0 : items.length - 1);
+    } else if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      if (open && items[active]) commit(items[active]);
+      else openAt();
+    } else if (e.key === "Escape" || e.key === "Tab") {
+      e.preventDefault();
+      setOpen(false);
+      triggerRef.current?.focus();
+    }
+  };
+
   return (
-    <select className={cn(inputBase, "h-11 appearance-none bg-[length:14px] bg-[right_14px_center] bg-no-repeat pr-10", className)} style={{ backgroundImage: "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23a19f94' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>\")" }} {...rest}>
-      {children}
-    </select>
+    <div ref={rootRef} className="relative">
+      <button
+        ref={triggerRef}
+        type="button"
+        role="combobox"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-controls={open ? listId : undefined}
+        aria-activedescendant={open ? `${listId}-${active}` : undefined}
+        aria-label={rest["aria-label"]}
+        disabled={disabled}
+        onClick={() => (open ? setOpen(false) : openAt())}
+        onKeyDown={onKeyDown}
+        className={cn(inputBase, "flex h-11 items-center justify-between gap-2 text-left", className)}
+      >
+        <span className="truncate">{selected?.label ?? items[0]?.label ?? ""}</span>
+        <ChevronDown className={cn("h-4 w-4 shrink-0 text-muted transition-transform duration-200", open && "rotate-180")} />
+      </button>
+      {open && (
+        <div id={listId} role="listbox" className="absolute left-0 top-[calc(100%+6px)] z-[70] max-h-64 w-max min-w-full max-w-[min(90vw,320px)] overflow-y-auto rounded-2xl border border-line bg-card p-1.5 shadow-panel">
+          {items.map((it, i) => (
+            <button key={`${it.value}-${i}`} id={`${listId}-${i}`} type="button" role="option" tabIndex={-1} aria-selected={it.value === current} onMouseEnter={() => setActive(i)} onClick={() => commit(it)} className={cn("block w-full whitespace-nowrap rounded-xl px-3 py-2 text-left text-[13px] font-medium", i === active ? "bg-accent text-accent-ink" : "text-ink hover:bg-card2")}>
+              {it.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 

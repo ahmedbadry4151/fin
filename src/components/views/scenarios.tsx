@@ -14,7 +14,7 @@ import { EmptyState, Icon } from "../ui/states";
 import { ScenarioCard, type ScenarioCardData } from "../domain/cards";
 import { FanChart } from "../charts/fan-chart";
 import { useToast } from "../motion/toast";
-import { DUR, EASE_IN, EASE_OUT, SPRING, STEP } from "../motion/tokens";
+import { PAGE, PAGE_EXIT, SPRING, STEP } from "../motion/tokens";
 import { formatMoney, formatPct } from "@/lib/format";
 import { SCENARIO_CATEGORIES, SCENARIO_TEMPLATES, describeParams, parseScenarioText, templateByKey, type ScenarioCategory } from "@/lib/scenarios";
 import { ASSUMPTION_DEFS } from "@/lib/economy";
@@ -59,7 +59,7 @@ export function ScenarioLibraryView({ currency: c, scenarios, outcomes }: { curr
             {filtered.map((s, i) => {
               const o = outcomes[s.id];
               return (
-                <motion.div key={s.id} layout initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98, transition: { duration: DUR.exit, ease: EASE_IN } }} transition={{ duration: DUR.modal, ease: EASE_OUT }}>
+                <motion.div key={s.id} layout initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98, transition: PAGE_EXIT }} transition={PAGE}>
                   <ScenarioCard
                     scenario={s}
                     currency={c}
@@ -147,7 +147,7 @@ export function ScenarioBuilder({ currency: c, simTwin, econ, goals, existing }:
       <div className="grid gap-5 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <AnimatePresence mode="wait">
-            <motion.div key={step} initial={STEP.enter} animate={STEP.show} exit={{ ...STEP.exit, transition: { duration: DUR.exit, ease: EASE_IN } }} transition={{ duration: DUR.modal, ease: EASE_OUT }}>
+            <motion.div key={step} initial={STEP.enter} animate={STEP.show} exit={{ ...STEP.exit, transition: PAGE_EXIT }} transition={PAGE}>
               {step === 0 && (
                 <Card className="space-y-5">
                   <div>
@@ -313,7 +313,7 @@ export function AiScenarioBuilder({ currency: c, simTwin, econ }: { currency: st
       </Card>
       <AnimatePresence>
         {parsed && preview && (
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, transition: { duration: DUR.exit, ease: EASE_IN } }} transition={{ duration: DUR.page, ease: EASE_OUT }} className="mt-5 grid gap-5 lg:grid-cols-2">
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, transition: PAGE_EXIT }} transition={PAGE} className="mt-5 grid gap-5 lg:grid-cols-2">
             <Card className="space-y-4">
               <CardTitle>Extracted model changes</CardTitle>
               <ul className="space-y-1.5 text-[13px]">{parsed.notes.map((n) => <li key={n} className="flex gap-2"><span className="mt-1.5 h-1.5 w-1.5 shrink-0 pill bg-accent" />{n}</li>)}</ul>

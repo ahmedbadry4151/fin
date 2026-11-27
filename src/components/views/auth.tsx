@@ -8,13 +8,13 @@ import { ArrowRight, Check, Mail } from "lucide-react";
 import { Logo } from "../shell/app-shell";
 import { Button } from "../ui/button";
 import { Field, Input, Checkbox } from "../ui/field";
-import { DUR, EASE_OUT, SPRING } from "../motion/tokens";
+import { PAGE, SPRING } from "../motion/tokens";
 import { DEMO_EMAIL, DEMO_PASSWORD } from "@/lib/constants";
 
 export function AuthShell({ title, subtitle, children, footer }: { title: string; subtitle?: string; children: React.ReactNode; footer?: React.ReactNode }) {
   return (
     <div className="glow grid min-h-screen place-items-center bg-page px-4 py-10">
-      <motion.div layoutId="auth-card" className="w-full max-w-[420px]" initial={{ opacity: 0, y: 14, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ duration: DUR.base, ease: EASE_OUT }}>
+      <motion.div layoutId="auth-card" className="w-full max-w-[420px]" initial={{ opacity: 0, y: 14, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={PAGE}>
         <div className="mb-6 flex justify-center">
           <motion.div initial={{ rotate: -8, scale: 0.9 }} animate={{ rotate: 0, scale: 1 }} transition={SPRING.soft}>
             <Logo />

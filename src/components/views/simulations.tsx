@@ -16,7 +16,7 @@ import { Histogram, HBars } from "../charts/charts";
 import { ProgressBar, CircularProgress } from "../motion/progress";
 import { useCountUp } from "../motion/count-up";
 import { Stagger, StaggerItem } from "../motion/stagger";
-import { DUR, EASE_IN, EASE_IN_OUT, EASE_OUT, SPRING, STEP } from "../motion/tokens";
+import { DUR, EASE_IN_OUT, EASE_OUT, PAGE, PAGE_EXIT, SPRING, STEP } from "../motion/tokens";
 import { useToast } from "../motion/toast";
 import { formatMoney, formatMonths, formatPct, relativeTime } from "@/lib/format";
 import { describeParams } from "@/lib/scenarios";
@@ -57,7 +57,7 @@ export function SimulationConfigView({ currency: c, scenario, goals, econ, defau
   if (running) {
     return (
       <div className="mx-auto grid min-h-[70vh] max-w-xl place-items-center">
-        <motion.div initial={STEP.enter} animate={STEP.show} transition={{ duration: DUR.modal, ease: EASE_OUT }} className="w-full text-center" role="status" aria-live="polite">
+        <motion.div initial={STEP.enter} animate={STEP.show} transition={PAGE} className="w-full text-center" role="status" aria-live="polite">
           <motion.span
             className="mx-auto grid h-16 w-16 place-items-center rounded-full border-[3px] border-accent border-t-transparent"
             animate={{ rotate: 360 }}
@@ -131,7 +131,7 @@ export function SimulationResultsView({ currency: c, sim, results: r, scenario, 
       <PillTabs items={tabs} current={current} layoutId="sim-tabs" className="mb-5" />
 
       <AnimatePresence mode="wait">
-        <motion.div key={tab} initial={STEP.enter} animate={STEP.show} exit={{ ...STEP.exit, transition: { duration: DUR.exit, ease: EASE_IN } }} transition={{ duration: DUR.modal, ease: EASE_OUT }}>
+        <motion.div key={tab} initial={STEP.enter} animate={STEP.show} exit={{ ...STEP.exit, transition: PAGE_EXIT }} transition={PAGE}>
           {tab === "overview" && (
             <Stagger className="space-y-5">
               <StaggerItem>

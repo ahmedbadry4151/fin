@@ -37,6 +37,7 @@ export const ACCOUNT_TYPES = [
   { key: "investment", label: "Investment" },
   { key: "credit", label: "Credit card" },
   { key: "wallet", label: "Digital wallet" },
+  { key: "other", label: "Other" },
 ];
 
 export const ASSET_TYPES = [

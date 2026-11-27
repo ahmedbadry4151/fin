@@ -136,7 +136,7 @@ export function ScenarioCard({ scenario, currency, outcome, onDuplicate, onDelet
 }
 
 /* ---------------- Account ---------------- */
-export const ACCOUNT_ICON: Record<string, string> = { bank: "Landmark", savings: "PiggyBank", cash: "Banknote", investment: "TrendingUp", credit: "CreditCard", wallet: "Smartphone" };
+export const ACCOUNT_ICON: Record<string, string> = { bank: "Landmark", savings: "PiggyBank", cash: "Banknote", investment: "TrendingUp", credit: "CreditCard", wallet: "Smartphone", other: "Circle" };
 
 export function AccountCard({ account, href, selected = false }: { account: { id: number; name: string; type: string; balance: number; currency: string; institution?: string | null; updatedAt: string | Date }; href?: string; selected?: boolean }) {
   return (

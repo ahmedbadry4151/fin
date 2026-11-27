@@ -9,7 +9,7 @@ import { Button } from "../ui/button";
 import { Select } from "../ui/field";
 import { StatusBadge } from "../ui/pill";
 import { useToast } from "../motion/toast";
-import { DUR, EASE_IN, EASE_OUT, SPRING, STEP } from "../motion/tokens";
+import { DUR, EASE_OUT, PAGE, PAGE_EXIT, SPRING, STEP } from "../motion/tokens";
 import { formatMoney } from "@/lib/format";
 import { EXPENSE_CATEGORIES } from "@/lib/finance";
 
@@ -125,7 +125,7 @@ export function ImportView({ currency: c, accounts, existingKeys }: { currency: 
       </ol>
 
       <AnimatePresence mode="wait">
-        <motion.div key={step} initial={STEP.enter} animate={STEP.show} exit={{ ...STEP.exit, transition: { duration: DUR.exit, ease: EASE_IN } }} transition={{ duration: DUR.modal, ease: EASE_OUT }}>
+        <motion.div key={step} initial={STEP.enter} animate={STEP.show} exit={{ ...STEP.exit, transition: PAGE_EXIT }} transition={PAGE}>
           {step === 0 && (
             <Card>
               <div
