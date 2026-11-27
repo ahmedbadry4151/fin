@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight, Check, Plus, Trash2, Clock, ShieldCheck, Info } from "lucide-react";
 import { Logo } from "../shell/app-shell";
 import { Button } from "../ui/button";
-import { DateInput, Field, Input, MoneyInput, Select, OptionCard, Slider, localISO } from "../ui/field";
+import { DateInput, Field, Input, MoneyInput, NumberInput, Select, OptionCard, Slider, localISO } from "../ui/field";
 import { StatusBadge, Chip } from "../ui/pill";
 import { Icon } from "../ui/states";
 import { AnimatedNumber, useCountUp } from "../motion/count-up";
@@ -99,7 +99,7 @@ export function OnboardingWizard({ initialName, initialCurrency }: { initialName
               <Section title="A little about you" sub="We only ask for what the model needs.">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <Field label="Name"><Input autoFocus value={profile.name} onChange={(e) => setProfile({ ...profile, name: e.target.value })} /></Field>
-                  <Field label="Age"><Input type="number" value={profile.age || ""} onChange={(e) => setProfile({ ...profile, age: Number(e.target.value) })} /></Field>
+                  <Field label="Age"><NumberInput value={profile.age || 0} onChange={(n) => setProfile({ ...profile, age: n })} /></Field>
                   <Field label="Country"><Input value={profile.country} onChange={(e) => setProfile({ ...profile, country: e.target.value })} /></Field>
                   <Field label="City"><Input value={profile.city} onChange={(e) => setProfile({ ...profile, city: e.target.value })} /></Field>
                 </div>
@@ -154,7 +154,7 @@ export function OnboardingWizard({ initialName, initialCurrency }: { initialName
             )}
             {step === 7 && (
               <Section title="Liabilities" sub="Loans and cards. Payments are modelled explicitly in every simulation.">
-                <RowEditor<LiabRow> rows={liabs} onChange={setLiabs} empty={{ id: 0, name: "", type: "personal_loan", balance: 0, monthlyPayment: 0, interestRate: 0.15, remainingMonths: 24 }} render={(row, set) => <div className="grid flex-1 gap-3 sm:grid-cols-3"><Input placeholder="Car loan" value={row.name} onChange={(e) => set({ ...row, name: e.target.value })} /><Select value={row.type} onChange={(e) => set({ ...row, type: e.target.value })}>{LIABILITY_TYPES.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}</Select><MoneyInput currency={c} placeholder="Balance" value={row.balance} onChange={(v) => set({ ...row, balance: v })} /><MoneyInput currency={c} placeholder="Payment" value={row.monthlyPayment} onChange={(v) => set({ ...row, monthlyPayment: v })} /><Input type="number" suffix="% rate" value={Math.round(row.interestRate * 1000) / 10} onChange={(e) => set({ ...row, interestRate: Number(e.target.value) / 100 })} /><Input type="number" suffix="months" value={row.remainingMonths} onChange={(e) => set({ ...row, remainingMonths: Number(e.target.value) })} /></div>} />
+                <RowEditor<LiabRow> rows={liabs} onChange={setLiabs} empty={{ id: 0, name: "", type: "personal_loan", balance: 0, monthlyPayment: 0, interestRate: 0.15, remainingMonths: 24 }} render={(row, set) => <div className="grid flex-1 gap-3 sm:grid-cols-3"><Input placeholder="Car loan" value={row.name} onChange={(e) => set({ ...row, name: e.target.value })} /><Select value={row.type} onChange={(e) => set({ ...row, type: e.target.value })}>{LIABILITY_TYPES.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}</Select><MoneyInput currency={c} placeholder="Balance" value={row.balance} onChange={(v) => set({ ...row, balance: v })} /><MoneyInput currency={c} placeholder="Payment" value={row.monthlyPayment} onChange={(v) => set({ ...row, monthlyPayment: v })} /><NumberInput suffix="% rate" value={Math.round(row.interestRate * 1000) / 10} onChange={(n) => set({ ...row, interestRate: n / 100 })} /><NumberInput suffix="months" value={row.remainingMonths} onChange={(n) => set({ ...row, remainingMonths: n })} /></div>} />
                 <div className="mt-6 grid grid-cols-2 gap-3"><Total label="Total Debt" value={totalDebt} c={c} dark /><Total label="Monthly Debt Payments" value={debtPayments} c={c} /></div>
               </Section>
             )}

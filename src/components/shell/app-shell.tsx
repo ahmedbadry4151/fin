@@ -163,7 +163,7 @@ export function AppShell({ user, unread, accounts, children }: { user: ShellUser
           <button onClick={() => setPaletteOpen(true)} className="ml-auto grid h-9 w-9 place-items-center pill text-muted sm:hidden" aria-label="Search">
             <Search className="h-4 w-4" />
           </button>
-          <button onClick={toggle} className="grid h-9 w-9 place-items-center pill text-muted hover:text-ink hover:bg-card2 focus-ring lg:hidden" aria-label="Toggle theme">
+          <button onClick={toggle} className="grid h-9 w-9 place-items-center pill text-muted hover:text-ink hover:bg-card2 focus-ring" aria-label="Toggle theme">
             {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </button>
           <Link href="/notifications" className="relative grid h-9 w-9 place-items-center pill text-muted hover:text-ink hover:bg-card2 focus-ring" aria-label={`Notifications${unread ? `, ${unread} unread` : ""}`}>

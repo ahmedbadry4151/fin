@@ -8,7 +8,7 @@ import { Plus, Sparkles, ArrowRight, ArrowLeft, Play, Check } from "lucide-react
 import { Card, CardTitle, PageHeader, KeyValue } from "../ui/card";
 import { Button } from "../ui/button";
 import { FilterPill, StatusBadge, Chip, SegmentedControl } from "../ui/pill";
-import { Field, Input, MoneyInput, Select, Slider, Textarea, Toggle, OptionCard } from "../ui/field";
+import { Field, Input, MoneyInput, NumberInput, Select, Slider, Textarea, Toggle, OptionCard } from "../ui/field";
 import { ConfirmDialog } from "../ui/overlay";
 import { EmptyState, Icon } from "../ui/states";
 import { ScenarioCard, type ScenarioCardData } from "../domain/cards";
@@ -179,14 +179,14 @@ export function ScenarioBuilder({ currency: c, simTwin, econ, goals, existing }:
               {step === 2 && (
                 <Card className="space-y-6">
                   <div className="grid gap-4 md:grid-cols-2">
-                    <Field label="Income change" hint="Percent of current income. −100 means income stops."><Input type="number" suffix="%" value={p.incomeChangePct ?? 0} onChange={(e) => setP({ incomeChangePct: Number(e.target.value) || undefined })} /></Field>
-                    <Field label="Expense change" hint="Percent of total monthly expenses."><Input type="number" suffix="%" value={p.expenseChangePct ?? 0} onChange={(e) => setP({ expenseChangePct: Number(e.target.value) || undefined })} /></Field>
-                    <Field label="Extra monthly expense" hint="Negative removes an expense (e.g. rent after buying)."><Input type="number" prefix={c} value={p.extraMonthlyExpense ?? 0} onChange={(e) => setP({ extraMonthlyExpense: Number(e.target.value) || undefined, extraExpenseStartMonth: p.extraExpenseStartMonth ?? 1, extraExpenseDurationMonths: p.extraExpenseDurationMonths ?? null })} /></Field>
+                    <Field label="Income change" hint="Percent of current income. −100 means income stops."><NumberInput suffix="%" value={p.incomeChangePct ?? 0} onChange={(n) => setP({ incomeChangePct: n || undefined })} /></Field>
+                    <Field label="Expense change" hint="Percent of total monthly expenses."><NumberInput suffix="%" value={p.expenseChangePct ?? 0} onChange={(n) => setP({ expenseChangePct: n || undefined })} /></Field>
+                    <Field label="Extra monthly expense" hint="Negative removes an expense (e.g. rent after buying)."><NumberInput prefix={c} value={p.extraMonthlyExpense ?? 0} onChange={(n) => setP({ extraMonthlyExpense: n || undefined, extraExpenseStartMonth: p.extraExpenseStartMonth ?? 1, extraExpenseDurationMonths: p.extraExpenseDurationMonths ?? null })} /></Field>
                     <Field label="Extra monthly income"><MoneyInput currency={c} value={p.extraMonthlyIncome ?? 0} onChange={(v) => setP({ extraMonthlyIncome: v || undefined, extraIncomeStartMonth: p.extraIncomeStartMonth ?? 1, extraIncomeDurationMonths: p.extraIncomeDurationMonths ?? null })} /></Field>
                     <Field label="One-time cost"><MoneyInput currency={c} value={p.oneTimeCost ?? 0} onChange={(v) => setP({ oneTimeCost: v || undefined })} /></Field>
                     <Field label="One-time inflow"><MoneyInput currency={c} value={p.oneTimeIncome ?? 0} onChange={(v) => setP({ oneTimeIncome: v || undefined, oneTimeIncomeMonth: p.oneTimeIncomeMonth ?? 1 })} /></Field>
-                    <Field label="Savings change" hint="Percent change in monthly savings and goal contributions."><Input type="number" suffix="%" value={p.savingsChangePct ?? 0} onChange={(e) => setP({ savingsChangePct: Number(e.target.value) || undefined })} /></Field>
-                    <Field label="Delay goal" hint="Months to push the goal date."><Input type="number" suffix="months" value={p.goalDelayMonths ?? 0} onChange={(e) => setP({ goalDelayMonths: Number(e.target.value) || undefined })} /></Field>
+                    <Field label="Savings change" hint="Percent change in monthly savings and goal contributions."><NumberInput suffix="%" value={p.savingsChangePct ?? 0} onChange={(n) => setP({ savingsChangePct: n || undefined })} /></Field>
+                    <Field label="Delay goal" hint="Months to push the goal date."><NumberInput suffix="months" value={p.goalDelayMonths ?? 0} onChange={(n) => setP({ goalDelayMonths: n || undefined })} /></Field>
                   </div>
                   <div className="rounded-2xl border border-line bg-card2 p-4">
                     <Toggle checked={!!p.purchase} onChange={(v) => setP({ purchase: v ? { label: "Asset", price: 1000000, downPaymentPct: 0.2, month: 12, loanRate: 0.18, loanYears: 15, appreciation: 0.08 } : null })} label="Includes a major purchase" description="Adds an asset plus a loan for the remainder." />
@@ -194,10 +194,10 @@ export function ScenarioBuilder({ currency: c, simTwin, econ, goals, existing }:
                       <div className="mt-4 grid gap-3 md:grid-cols-3">
                         <Field label="Label"><Input value={p.purchase.label ?? ""} onChange={(e) => setP({ purchase: { ...p.purchase!, label: e.target.value } })} /></Field>
                         <Field label="Price"><MoneyInput currency={c} value={p.purchase.price} onChange={(v) => setP({ purchase: { ...p.purchase!, price: v } })} /></Field>
-                        <Field label="Down payment"><Input type="number" suffix="%" value={Math.round(p.purchase.downPaymentPct * 100)} onChange={(e) => setP({ purchase: { ...p.purchase!, downPaymentPct: Number(e.target.value) / 100 } })} /></Field>
-                        <Field label="Loan rate"><Input type="number" suffix="%" value={Math.round(p.purchase.loanRate * 100)} onChange={(e) => setP({ purchase: { ...p.purchase!, loanRate: Number(e.target.value) / 100 } })} /></Field>
-                        <Field label="Loan years"><Input type="number" value={p.purchase.loanYears} onChange={(e) => setP({ purchase: { ...p.purchase!, loanYears: Number(e.target.value) } })} /></Field>
-                        <Field label="Yearly value change"><Input type="number" suffix="%" value={Math.round(p.purchase.appreciation * 100)} onChange={(e) => setP({ purchase: { ...p.purchase!, appreciation: Number(e.target.value) / 100 } })} /></Field>
+                        <Field label="Down payment"><NumberInput suffix="%" value={Math.round(p.purchase.downPaymentPct * 100)} onChange={(n) => setP({ purchase: { ...p.purchase!, downPaymentPct: n / 100 } })} /></Field>
+                        <Field label="Loan rate"><NumberInput suffix="%" value={Math.round(p.purchase.loanRate * 100)} onChange={(n) => setP({ purchase: { ...p.purchase!, loanRate: n / 100 } })} /></Field>
+                        <Field label="Loan years"><NumberInput value={p.purchase.loanYears} onChange={(n) => setP({ purchase: { ...p.purchase!, loanYears: n } })} /></Field>
+                        <Field label="Yearly value change"><NumberInput suffix="%" value={Math.round(p.purchase.appreciation * 100)} onChange={(n) => setP({ purchase: { ...p.purchase!, appreciation: n / 100 } })} /></Field>
                       </div>
                     )}
                   </div>
@@ -318,10 +318,10 @@ export function AiScenarioBuilder({ currency: c, simTwin, econ }: { currency: st
               <CardTitle>Extracted model changes</CardTitle>
               <ul className="space-y-1.5 text-[13px]">{parsed.notes.map((n) => <li key={n} className="flex gap-2"><span className="mt-1.5 h-1.5 w-1.5 shrink-0 pill bg-accent" />{n}</li>)}</ul>
               <div className="grid grid-cols-2 gap-3 border-t border-line pt-4">
-                <Field label="Income change"><Input type="number" suffix="%" value={params.incomeChangePct ?? 0} onChange={(e) => setParams({ ...params, incomeChangePct: Number(e.target.value) || undefined, incomeStartMonth: params.incomeStartMonth ?? 1 })} /></Field>
-                <Field label="Duration"><Input type="number" suffix="months" value={params.incomeDurationMonths ?? 0} onChange={(e) => setParams({ ...params, incomeDurationMonths: Number(e.target.value) || null })} /></Field>
-                <Field label="Expense change"><Input type="number" suffix="%" value={params.expenseChangePct ?? 0} onChange={(e) => setParams({ ...params, expenseChangePct: Number(e.target.value) || undefined, expenseStartMonth: 1, expenseDurationMonths: null })} /></Field>
-                <Field label="Savings change"><Input type="number" suffix="%" value={params.savingsChangePct ?? 0} onChange={(e) => setParams({ ...params, savingsChangePct: Number(e.target.value) || undefined })} /></Field>
+                <Field label="Income change"><NumberInput suffix="%" value={params.incomeChangePct ?? 0} onChange={(n) => setParams({ ...params, incomeChangePct: n || undefined, incomeStartMonth: params.incomeStartMonth ?? 1 })} /></Field>
+                <Field label="Duration"><NumberInput suffix="months" value={params.incomeDurationMonths ?? 0} onChange={(n) => setParams({ ...params, incomeDurationMonths: n || null })} /></Field>
+                <Field label="Expense change"><NumberInput suffix="%" value={params.expenseChangePct ?? 0} onChange={(n) => setParams({ ...params, expenseChangePct: n || undefined, expenseStartMonth: 1, expenseDurationMonths: null })} /></Field>
+                <Field label="Savings change"><NumberInput suffix="%" value={params.savingsChangePct ?? 0} onChange={(n) => setParams({ ...params, savingsChangePct: n || undefined })} /></Field>
                 <Field label="One-time cost"><MoneyInput currency={c} value={params.oneTimeCost ?? 0} onChange={(v) => setParams({ ...params, oneTimeCost: v || undefined, oneTimeCostMonth: params.oneTimeCostMonth ?? 1 })} /></Field>
                 <Field label="Extra monthly expense"><MoneyInput currency={c} value={params.extraMonthlyExpense ?? 0} onChange={(v) => setParams({ ...params, extraMonthlyExpense: v || undefined, extraExpenseStartMonth: params.extraExpenseStartMonth ?? 1, extraExpenseDurationMonths: null })} /></Field>
               </div>

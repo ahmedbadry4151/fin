@@ -7,7 +7,7 @@ import { Plus, Trash2, ArrowUpRight } from "lucide-react";
 import { Stagger, StaggerItem } from "../motion/stagger";
 import { Card, CardTitle, MetricCard, PageHeader } from "../ui/card";
 import { Button } from "../ui/button";
-import { Field, Input, MoneyInput, Select, OptionCard } from "../ui/field";
+import { Field, Input, MoneyInput, NumberInput, Select, OptionCard } from "../ui/field";
 import { ConfirmDialog } from "../ui/overlay";
 import { EmptyState, Icon } from "../ui/states";
 import { AccountCard, TransactionRow, ACCOUNT_ICON, type TxData } from "../domain/cards";
@@ -138,7 +138,7 @@ export function AccountDetailView({ currency: c, account, transactions, months, 
         <Card className="mb-5 grid gap-4 md:grid-cols-4">
           <Field label="Name"><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></Field>
           <Field label="Institution"><Input value={form.institution} onChange={(e) => setForm({ ...form, institution: e.target.value })} /></Field>
-          <Field label="Balance"><Input type="number" prefix={c} value={form.balance} onChange={(e) => setForm({ ...form, balance: Number(e.target.value) })} /></Field>
+          <Field label="Balance"><NumberInput prefix={c} value={form.balance} onChange={(n) => setForm({ ...form, balance: n })} /></Field>
           <div className="flex items-end gap-2"><Button onClick={save}>Save</Button><Button variant="danger" icon={<Trash2 className="h-4 w-4" />} onClick={() => setConfirm(true)}>Delete</Button></div>
         </Card>
       )}

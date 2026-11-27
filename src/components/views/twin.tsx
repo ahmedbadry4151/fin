@@ -8,7 +8,7 @@ import { Stagger, StaggerItem } from "../motion/stagger";
 import { Card, CardTitle, MetricCard, KeyValue, PageHeader } from "../ui/card";
 import { Button } from "../ui/button";
 import { Drawer } from "../ui/overlay";
-import { Field, MoneyInput, Input, Select } from "../ui/field";
+import { Field, MoneyInput, Input, NumberInput, Select } from "../ui/field";
 import { HBars } from "../charts/charts";
 import { ProgressBar } from "../motion/progress";
 import { useToast } from "../motion/toast";
@@ -225,8 +225,8 @@ export function TwinView({ currency: c, metrics: m, profile, accounts, assets, l
           <Field label="Remaining balance"><MoneyInput currency={c} value={liabForm.balance} onChange={(v) => setLiabForm({ ...liabForm, balance: v })} /></Field>
           <Field label="Monthly payment"><MoneyInput currency={c} value={liabForm.monthlyPayment} onChange={(v) => setLiabForm({ ...liabForm, monthlyPayment: v })} /></Field>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Interest rate"><Input type="number" step="0.5" suffix="%" value={Math.round(liabForm.interestRate * 1000) / 10} onChange={(e) => setLiabForm({ ...liabForm, interestRate: Number(e.target.value) / 100 })} /></Field>
-            <Field label="Remaining duration"><Input type="number" suffix="months" value={liabForm.remainingMonths} onChange={(e) => setLiabForm({ ...liabForm, remainingMonths: Number(e.target.value) })} /></Field>
+            <Field label="Interest rate"><NumberInput step="0.5" suffix="%" value={Math.round(liabForm.interestRate * 1000) / 10} onChange={(n) => setLiabForm({ ...liabForm, interestRate: n / 100 })} /></Field>
+            <Field label="Remaining duration"><NumberInput suffix="months" value={liabForm.remainingMonths} onChange={(n) => setLiabForm({ ...liabForm, remainingMonths: n })} /></Field>
           </div>
         </div>
       </Drawer>

@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Save } from "lucide-react";
 import { Card, CardTitle, PageHeader, KeyValue } from "../ui/card";
 import { Button } from "../ui/button";
-import { Slider, Field, MoneyInput, Input } from "../ui/field";
+import { Slider, Field, MoneyInput, NumberInput } from "../ui/field";
 import { CircularProgress } from "../motion/progress";
 import { useCountUp } from "../motion/count-up";
 import { FanChart } from "../charts/fan-chart";
@@ -59,7 +59,7 @@ export function GoalPlannerView({ currency: c, goal, simTwin, econ }: { currency
           <div className="grid grid-cols-2 gap-3 border-t border-line pt-4">
             <Field label="Target"><MoneyInput currency={c} value={target} onChange={setTarget} /></Field>
             <Field label="Contribution"><MoneyInput currency={c} value={contribution} onChange={setContribution} /></Field>
-            <Field label="Months"><Input type="number" value={months} onChange={(e) => setMonths(Math.max(1, Number(e.target.value)))} /></Field>
+            <Field label="Months"><NumberInput min={1} value={months} onChange={setMonths} /></Field>
             <Field label="Starting"><MoneyInput currency={c} value={starting} onChange={setStarting} /></Field>
           </div>
         </Card>

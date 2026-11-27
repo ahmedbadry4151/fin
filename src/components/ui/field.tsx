@@ -37,6 +37,59 @@ export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputE
   return <input ref={ref} className={cn(inputBase, "h-11", className)} {...rest} />;
 });
 
+/**
+ * Numeric input that shows nothing for 0 and keeps a raw text draft while
+ * focused, so a leading zero or an unfinished decimal never fights the caret.
+ * The parent always receives a clamped number; `""`, `"."` and `"-"` mean 0.
+ */
+export function NumberInput({
+  value,
+  onChange,
+  min = Number.NEGATIVE_INFINITY,
+  max = Number.POSITIVE_INFINITY,
+  step,
+  prefix,
+  suffix,
+  className,
+  onFocus,
+  onBlur,
+  ...rest
+}: Omit<InputHTMLAttributes<HTMLInputElement>, "value" | "onChange" | "type"> & { value: number; onChange: (n: number) => void; prefix?: string; suffix?: ReactNode }) {
+  const [draft, setDraft] = useState<string | null>(null);
+  const shown = draft ?? (Number.isFinite(value) && value !== 0 ? String(value) : "");
+  const parse = (raw: string) => {
+    const n = raw === "" || raw === "-" || raw === "." || raw === "-." ? 0 : Number(raw);
+    return Number.isFinite(n) ? Math.min(Number(max), Math.max(Number(min), n)) : 0;
+  };
+  return (
+    <Input
+      {...rest}
+      type="text"
+      inputMode="decimal"
+      prefix={prefix}
+      suffix={suffix}
+      className={cn("tnum", className)}
+      value={shown}
+      onFocus={(e) => {
+        if (draft === null) setDraft(shown);
+        onFocus?.(e);
+      }}
+      onChange={(e) => {
+        const next = e.target.value;
+        if (!/^-?\d*\.?\d*$/.test(next)) return;
+        setDraft(next);
+        onChange(parse(next));
+      }}
+      onBlur={(e) => {
+        if (draft !== null) onChange(parse(draft));
+        setDraft(null);
+        onBlur?.(e);
+      }}
+      step={step}
+    />
+  );
+}
+
 export function MoneyInput({ value, onChange, currency = "EGP", className, min = 0, max, step = 1, ...rest }: Omit<InputHTMLAttributes<HTMLInputElement>, "value" | "onChange"> & { value: number; onChange: (n: number) => void; currency?: string }) {
   const lo = Number(min);
   const hi = max === undefined ? Number.POSITIVE_INFINITY : Number(max);
@@ -52,17 +105,15 @@ export function MoneyInput({ value, onChange, currency = "EGP", className, min =
     </span>
   );
   return (
-    <Input
-      type="number"
-      inputMode="decimal"
+    <NumberInput
       prefix={currency}
       suffix={steppers}
-      value={Number.isFinite(value) ? value : ""}
-      onChange={(e) => onChange(e.target.value === "" ? 0 : Number(e.target.value))}
+      value={value}
+      onChange={onChange}
+      min={lo}
+      max={max === undefined ? undefined : hi}
+      step={delta}
       className={className}
-      min={min}
-      max={max}
-      step={step}
       {...rest}
     />
   );
