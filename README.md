@@ -72,7 +72,14 @@ The project was converted from a full-stack app (Next.js + API routes + Drizzle 
 ```bash
 npm run lint        # ESLint (a few pre-existing warnings/errors in chart components)
 npm run typecheck   # tsc --noEmit
+npm test            # PostgreSQL database & user-journey tests (9/9 passing via PGlite)
 ```
+
+## Backend & Database layer (`backend` branch)
+
+A full **18-table PostgreSQL + Drizzle ORM** schema, migrations, demo seed, business services, and automated user-journey test suite have been added under `src/db/` and `drizzle/` without modifying the existing frontend views.
+
+- See [src/db/README.md](src/db/README.md) for the full schema breakdown, security/ownership constraints, Docker + DBeaver setup (`127.0.0.1:5433`), Neon/Supabase instructions, and database test commands (`npm test`, `npm run db:setup`, `npm run db:studio`).
 
 ## Project structure
 
